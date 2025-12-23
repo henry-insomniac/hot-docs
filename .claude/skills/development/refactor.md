@@ -3,6 +3,20 @@
 ## 描述
 系统性重构代码，保持架构清晰，提升代码质量和可维护性。
 
+## ⚠️ 重要原则
+
+**禁止直接在 main/master 分支重构代码！**
+
+所有重构必须：
+1. ✅ 先使用 `/branch` 创建重构分支（refactor/*）
+2. ✅ 在新分支上重构
+3. ✅ 确保测试通过（重构前后行为一致）
+4. ✅ 完成后创建 PR 合并
+
+**建议流程：** `/branch` → `/test`（重构前） → `/refactor` → `/test`（验证） → `/commit` → `/pr`
+
+**详细工作流：** 参考 `.claude/skills/workflows/refactor.md`
+
 ## 适用场景
 - 模块职责边界优化
 - 性能瓶颈重构
@@ -101,6 +115,8 @@ handlers[type](file);
 - packages/*/src/**/*.ts
 
 ## 配合使用的 Skills
+- `/branch` - **【必需】** 重构前创建分支（refactor/*）
 - `/review` - 重构前审查代码
 - `/test` - 重构前后测试覆盖
 - `/commit` - 重构完成后提交
+- `/pr` - **【必需】** 创建 PR 合并到目标分支

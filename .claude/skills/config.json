@@ -203,7 +203,9 @@
   "workflows": {
     "new-feature": {
       "name": "新功能开发",
-      "description": "完整的新功能开发流程",
+      "description": "完整的新功能开发流程（强制分支：feature/*）",
+      "branchRequired": true,
+      "branchPattern": "feature/<scope>/<description>",
       "steps": [
         "/prd",
         "/arch",
@@ -213,25 +215,49 @@
         "/test",
         "/docs",
         "/commit",
-        "/pr",
-        "/review-pr"
+        "/sync",
+        "/review-pr --self",
+        "/pr"
       ]
     },
     "bug-fix": {
       "name": "Bug 修复",
-      "description": "Bug 修复流程",
+      "description": "Bug 修复流程（强制分支：fix/*，TDD 驱动）",
+      "branchRequired": true,
+      "branchPattern": "fix/<scope>/<issue>-<description>",
       "steps": [
         "/branch",
         "/debug",
         "/test",
         "/commit",
+        "/sync",
+        "/review-pr --self",
+        "/pr"
+      ]
+    },
+    "refactor": {
+      "name": "代码重构",
+      "description": "代码重构流程（强制分支：refactor/*，测试保护）",
+      "branchRequired": true,
+      "branchPattern": "refactor/<scope>/<description>",
+      "steps": [
+        "/branch",
+        "/test",
+        "/refactor",
+        "/test",
+        "/commit",
+        "/sync",
+        "/review-pr --self",
         "/pr"
       ]
     },
     "plugin-development": {
       "name": "插件开发",
-      "description": "Hot Docs 插件开发流程",
+      "description": "Hot Docs 插件开发流程（强制分支：feature/plugins/*）",
+      "branchRequired": true,
+      "branchPattern": "feature/plugins/<plugin-name>",
       "steps": [
+        "/branch",
         "/plugin",
         "/test",
         "/docs",
@@ -241,8 +267,11 @@
     },
     "theme-development": {
       "name": "主题开发",
-      "description": "Hot Docs 主题开发流程",
+      "description": "Hot Docs 主题开发流程（强制分支：feature/themes/*）",
+      "branchRequired": true,
+      "branchPattern": "feature/themes/<theme-name>",
       "steps": [
+        "/branch",
         "/theme",
         "/docs",
         "/commit",
@@ -251,8 +280,11 @@
     },
     "performance-optimization": {
       "name": "性能优化",
-      "description": "性能分析和优化流程",
+      "description": "性能分析和优化流程（强制分支：refactor/perf/*）",
+      "branchRequired": true,
+      "branchPattern": "refactor/perf/<description>",
       "steps": [
+        "/branch",
         "/perf",
         "/refactor",
         "/test",
@@ -316,6 +348,24 @@
       "content",
       "build",
       "docs"
-    ]
+    ],
+    "branchProtection": {
+      "enabled": true,
+      "protectedBranches": ["main", "master"],
+      "rules": {
+        "noDirectCommits": true,
+        "requirePR": true,
+        "requireBranchNaming": true,
+        "requireTests": true
+      },
+      "branchTypes": {
+        "feature": "feature/<scope>/<description>",
+        "fix": "fix/<scope>/<issue>-<description>",
+        "refactor": "refactor/<scope>/<description>",
+        "hotfix": "hotfix/<version>-<description>",
+        "docs": "docs/<description>",
+        "chore": "chore/<description>"
+      }
+    }
   }
 }

@@ -10,6 +10,20 @@
 - ✅ **Hot Docs 特化**：插件/主题开发专属 Skills
 - ✅ **标准化实践**：架构分层/安全边界/性能优化内置规范
 - ✅ **开源友好**：贡献指南/迁移工具/发布自动化
+- ✅ **分支保护**：强制分支工作流，确保代码质量
+
+## ⚠️ 重要：分支保护策略
+
+**所有代码修改必须在功能分支进行，禁止直接在 main 分支提交！**
+
+详细规范请阅读：**[分支保护规范文档](./BRANCH_PROTECTION.md)**
+
+快速规则：
+- ✅ 使用 `/branch` 创建功能分支
+- ✅ 在新分支开发/修复/重构
+- ✅ 使用 `/pr` 创建 Pull Request 合并
+- ❌ 禁止直接在 main 分支提交
+- ❌ 禁止直接推送到 main 分支
 
 ---
 
@@ -171,24 +185,29 @@
 
 ## 📊 工作流模板
 
-项目预置了 4 个常用工作流模板：
+项目预置了 5 个常用工作流模板（**全部强制分支保护**）：
 
 ### 1. 新功能开发
 路径：`.claude/skills/workflows/new-feature.md`
 
-完整流程：需求 → 架构 → 分支 → 实现 → 测试 → 文档 → 提交 → PR
+完整流程：需求 → 架构 → **分支（必需）** → 实现 → 测试 → 文档 → 提交 → 同步 → 自审 → **PR（必需）**
 
 ### 2. Bug 修复
 路径：`.claude/skills/workflows/bug-fix.md`
 
-快速流程：分支 → 诊断 → 测试 → 修复 → 提交 → PR
+快速流程：**分支（必需）** → 诊断 → 测试（TDD） → 修复 → 提交 → 同步 → 自审 → **PR（必需）**
 
-### 3. 插件开发
+### 3. 代码重构
+路径：`.claude/skills/workflows/refactor.md`
+
+重构流程：**分支（必需）** → 测试（重构前） → 重构 → 测试（验证） → 提交 → 同步 → 自审 → **PR（必需）**
+
+### 4. 插件开发
 路径：`.claude/skills/workflows/plugin-development.md`
 
-专项流程：设计 → 实现 → 测试 → 文档 → 提交 → PR
+专项流程：**分支** → 设计 → 实现 → 测试 → 文档 → 提交 → **PR**
 
-### 4. 版本发布
+### 5. 版本发布
 路径：`.claude/skills/workflows/release.md`
 
 发布流程：里程碑 → 变更日志 → 构建 → 发布
@@ -443,6 +462,7 @@ Foundation (文件系统/Watch/缓存)
 
 ## 📞 支持
 
+- **分支保护规范**：**[BRANCH_PROTECTION.md](./BRANCH_PROTECTION.md)** ⚠️ 必读
 - **文档问题**：查看各 Skill 的详细文档（`.claude/skills/<category>/<skill>.md`）
 - **工作流问题**：参考工作流模板（`.claude/skills/workflows/`）
 - **配置问题**：查看 `config.json`
@@ -450,6 +470,15 @@ Foundation (文件系统/Watch/缓存)
 ---
 
 ## 📝 版本历史
+
+### v1.1.0 (2025-12-23)
+- 🔒 **分支保护策略**：强制分支工作流
+  - 添加 `BRANCH_PROTECTION.md` 规范文档
+  - 更新所有工作流模板（new-feature, bug-fix, refactor）
+  - 更新 6 个开发/版本控制 Skills 文档
+  - 在 `config.json` 添加分支保护配置
+- ✨ 新增重构工作流（`workflows/refactor.md`）
+- 📝 更新 README，强调分支保护
 
 ### v1.0.0 (2025-12-23)
 - ✨ 初始版本
