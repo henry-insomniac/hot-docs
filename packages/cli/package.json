@@ -1,0 +1,17 @@
+{
+  "name": "@hot-docs/cli",
+  "version": "0.0.1",
+  "type": "module",
+  "bin": {
+    "hot-docs": "./dist/index.js"
+  },
+  "scripts": {
+    "dev": "tsx src/index.ts dev",
+    "build": "node ../../scripts/build.mjs cli",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@hot-docs/dev-server": "workspace:*"
+  }
+}
+

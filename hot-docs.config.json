@@ -1,0 +1,11 @@
+{
+  "contentDir": "./content",
+  "collections": {
+    "docs": { "dir": "docs", "routeBase": "/", "type": "docs" },
+    "blog": { "dir": "blog", "routeBase": "/blog", "type": "blog" },
+    "pages": { "dir": "pages", "routeBase": "/", "type": "pages" }
+  },
+  "site": { "title": "Hot Docs", "base": "/" },
+  "dev": { "port": 5173, "host": "127.0.0.1", "open": false, "includeDrafts": true }
+}
+

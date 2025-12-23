@@ -1,0 +1,23 @@
+{
+  "name": "@hot-docs/dev-server",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "node ../../scripts/build.mjs dev-server",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@hot-docs/core": "workspace:*",
+    "chokidar": "^4.0.0",
+    "ws": "^8.18.0"
+  }
+}
+
