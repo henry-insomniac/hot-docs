@@ -1,3 +1,16 @@
+---
+name: contributing
+description: "编写开源贡献指南、行为准则等社区文档"
+category: documentation
+priority: recommended
+required_before: []
+required_after: [commit]
+auto_trigger: false
+hot_docs_specific: false
+branch_required: false
+tags: [documentation, contributing, opensource, community]
+---
+
 # /contributing - 贡献指南助手
 
 ## 描述

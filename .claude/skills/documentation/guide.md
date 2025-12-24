@@ -1,3 +1,16 @@
+---
+name: guide
+description: "编写用户教程、快速开始、最佳实践等用户指南"
+category: documentation
+priority: recommended
+required_before: []
+required_after: [commit]
+auto_trigger: false
+hot_docs_specific: false
+branch_required: false
+tags: [documentation, guide, tutorial, user-facing]
+---
+
 # /guide - 用户指南助手
 
 ## 描述

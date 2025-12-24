@@ -1,3 +1,16 @@
+---
+name: review-pr
+description: "辅助进行 PR 代码审查，提供审查清单和建议"
+category: versioning
+priority: required
+required_before: [pr]
+required_after: []
+auto_trigger: false
+hot_docs_specific: false
+branch_required: false
+tags: [versioning, git, review, pull-request]
+---
+
 # /review-pr - PR 审查助手
 
 ## 描述

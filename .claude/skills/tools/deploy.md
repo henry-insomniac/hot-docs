@@ -1,3 +1,16 @@
+---
+name: deploy
+description: "辅助部署配置和执行，包括 CI/CD、环境配置等"
+category: tools
+priority: recommended
+required_before: [build]
+required_after: []
+auto_trigger: false
+hot_docs_specific: false
+branch_required: false
+tags: [tools, deploy, ci-cd, automation]
+---
+
 # /deploy - 部署配置助手
 
 ## 描述

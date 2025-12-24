@@ -1,3 +1,16 @@
+---
+name: build
+description: "辅助构建和打包配置，包括生产构建、优化等"
+category: tools
+priority: required
+required_before: [test]
+required_after: [deploy]
+auto_trigger: false
+hot_docs_specific: false
+branch_required: false
+tags: [tools, build, packaging, optimization]
+---
+
 # /build - 构建打包助手
 
 ## 描述

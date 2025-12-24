@@ -1,3 +1,16 @@
+---
+name: security
+description: "安全审计与加固，包括文件系统安全、插件安全、XSS 防护等"
+category: quality
+priority: required
+required_before: []
+required_after: [commit]
+auto_trigger: false
+hot_docs_specific: true
+branch_required: false
+tags: [quality, security, audit, plugin-security]
+---
+
 # /security - 安全审计专家
 
 ## 描述

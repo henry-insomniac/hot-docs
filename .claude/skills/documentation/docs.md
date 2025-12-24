@@ -1,3 +1,16 @@
+---
+name: docs
+description: "编写 API 文档、架构文档、技术规范等技术文档"
+category: documentation
+priority: required
+required_before: [implement]
+required_after: [commit]
+auto_trigger: false
+hot_docs_specific: false
+branch_required: false
+tags: [documentation, api, technical, reference]
+---
+
 # /docs - 技术文档助手
 
 ## 描述

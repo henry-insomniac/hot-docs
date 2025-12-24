@@ -1,3 +1,16 @@
+---
+name: changelog
+description: "生成和维护 CHANGELOG.md，遵循 Keep a Changelog 规范"
+category: versioning
+priority: required
+required_before: [release]
+required_after: []
+auto_trigger: false
+hot_docs_specific: false
+branch_required: false
+tags: [versioning, changelog, release-notes, documentation]
+---
+
 # /changelog - 变更日志生成
 
 ## 描述

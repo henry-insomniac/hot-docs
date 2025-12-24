@@ -1,3 +1,16 @@
+---
+name: commit
+description: "生成符合 Conventional Commits 规范的 Git 提交（禁止在 main 分支提交）"
+category: versioning
+priority: required
+required_before: [implement, test]
+required_after: [pr]
+auto_trigger: false
+hot_docs_specific: false
+branch_required: true
+tags: [versioning, git, commit, conventional-commits]
+---
+
 # /commit - 规范化提交
 
 ## 描述

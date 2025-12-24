@@ -1,3 +1,16 @@
+---
+name: analyze
+description: "分析代码库结构、依赖关系、技术债务等深度分析"
+category: tools
+priority: optional
+required_before: []
+required_after: [refactor, arch]
+auto_trigger: false
+hot_docs_specific: false
+branch_required: false
+tags: [tools, analysis, metrics, technical-debt]
+---
+
 # /analyze - 代码库深度分析
 
 ## 描述

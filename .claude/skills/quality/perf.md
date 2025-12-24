@@ -1,3 +1,16 @@
+---
+name: perf
+description: "性能分析与优化，包括响应时间、内存占用、构建速度等"
+category: quality
+priority: recommended
+required_before: []
+required_after: [refactor, commit]
+auto_trigger: false
+hot_docs_specific: false
+branch_required: true
+tags: [quality, performance, optimization, profiling]
+---
+
 # /perf - 性能优化专家
 
 ## 描述

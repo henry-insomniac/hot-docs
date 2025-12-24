@@ -1,3 +1,16 @@
+---
+name: release
+description: "完整的版本发布流程管理，包括打tag、发布notes等"
+category: versioning
+priority: required
+required_before: [milestone, build, test]
+required_after: [changelog]
+auto_trigger: false
+hot_docs_specific: false
+branch_required: false
+tags: [versioning, release, publish, semver]
+---
+
 # /release - 版本发布助手
 
 ## 描述

@@ -1,3 +1,16 @@
+---
+name: branch
+description: "智能创建和管理 Git 分支，遵循分支命名规范（所有开发工作的第一步）"
+category: versioning
+priority: required
+required_before: []
+required_after: [implement, debug, refactor]
+auto_trigger: false
+hot_docs_specific: false
+branch_required: false
+tags: [versioning, git, branch, workflow]
+---
+
 # /branch - 分支创建与管理
 
 ## 描述

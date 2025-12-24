@@ -1,3 +1,16 @@
+---
+name: migrate
+description: "辅助版本迁移和升级，生成迁移指南和脚本"
+category: tools
+priority: optional
+required_before: []
+required_after: [docs]
+auto_trigger: false
+hot_docs_specific: false
+branch_required: false
+tags: [tools, migration, upgrade, breaking-changes]
+---
+
 # /migrate - 迁移升级助手
 
 ## 描述

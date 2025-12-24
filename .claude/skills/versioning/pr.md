@@ -1,3 +1,16 @@
+---
+name: pr
+description: "创建和管理 Pull Request（所有代码合并到 main 的强制流程）"
+category: versioning
+priority: required
+required_before: [commit, sync]
+required_after: []
+auto_trigger: false
+hot_docs_specific: false
+branch_required: true
+tags: [versioning, git, pull-request, code-review]
+---
+
 # /pr - PR 创建与管理
 
 ## 描述

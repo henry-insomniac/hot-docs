@@ -1,3 +1,16 @@
+---
+name: test
+description: "编写和维护测试用例，确保代码质量和回归保护（TDD强烈推荐）"
+category: quality
+priority: required
+required_before: []
+required_after: [commit]
+auto_trigger: false
+hot_docs_specific: false
+branch_required: false
+tags: [quality, testing, tdd, coverage]
+---
+
 # /test - 测试编写助手
 
 ## 描述

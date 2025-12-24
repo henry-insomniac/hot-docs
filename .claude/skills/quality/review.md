@@ -1,3 +1,16 @@
+---
+name: review
+description: "执行代码审查，确保代码质量、架构合规性、安全性和可维护性"
+category: quality
+priority: required
+required_before: [implement]
+required_after: [commit]
+auto_trigger: false
+hot_docs_specific: false
+branch_required: false
+tags: [quality, review, code-quality, architecture]
+---
+
 # /review - 代码审查助手
 
 ## 描述

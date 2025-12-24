@@ -1,3 +1,16 @@
+---
+name: sync
+description: "同步主分支最新代码，处理合并冲突"
+category: versioning
+priority: recommended
+required_before: [pr]
+required_after: []
+auto_trigger: false
+hot_docs_specific: false
+branch_required: false
+tags: [versioning, git, sync, merge]
+---
+
 # /sync - 分支同步管理
 
 ## 描述
