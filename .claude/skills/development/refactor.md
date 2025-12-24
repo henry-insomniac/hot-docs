@@ -1,3 +1,16 @@
+---
+name: refactor
+description: "系统性重构代码，保持架构清晰，提升代码质量和可维护性（强制分支+测试保护）"
+category: development
+priority: required
+required_before: [branch, test]
+required_after: [test, commit, pr]
+auto_trigger: false
+hot_docs_specific: false
+branch_required: true
+tags: [development, refactoring, quality, testing]
+---
+
 # /refactor - 代码重构助手
 
 ## 描述

@@ -1,3 +1,16 @@
+---
+name: prd
+description: "智能编写、更新和审查产品需求文档（PRD），确保需求清晰、完整、可落地"
+category: planning
+priority: recommended
+required_before: []
+required_after: [arch, todo]
+auto_trigger: false
+hot_docs_specific: false
+branch_required: false
+tags: [planning, requirements, documentation, product]
+---
+
 # /prd - 需求文档管理
 
 ## 描述

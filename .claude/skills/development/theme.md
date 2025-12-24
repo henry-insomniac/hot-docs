@@ -1,3 +1,16 @@
+---
+name: theme
+description: "辅助开发 Hot Docs 主题，包括默认 Neon Dark 主题完善和第三方主题开发（Hot Docs 特有）"
+category: development
+priority: required
+required_before: [branch, arch]
+required_after: [test, docs, commit]
+auto_trigger: false
+hot_docs_specific: true
+branch_required: true
+tags: [development, theme, hot-docs, ui, styling]
+---
+
 # /theme - 主题开发专家
 
 ## 描述

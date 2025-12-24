@@ -1,3 +1,16 @@
+---
+name: milestone
+description: "跟踪里程碑进度，生成状态报告，识别里程碑风险，协调跨模块依赖"
+category: management
+priority: recommended
+required_before: [roadmap]
+required_after: [release]
+auto_trigger: false
+hot_docs_specific: false
+branch_required: false
+tags: [management, milestone, progress, reporting]
+---
+
 # /milestone - 里程碑跟踪
 
 ## 描述

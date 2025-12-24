@@ -1,3 +1,16 @@
+---
+name: tech-stack
+description: "分析、选型和更新技术栈决策，确保技术选型符合'轻量、静态优先'原则"
+category: planning
+priority: recommended
+required_before: []
+required_after: [arch]
+auto_trigger: false
+hot_docs_specific: false
+branch_required: false
+tags: [planning, technology, dependencies, evaluation]
+---
+
 # /tech-stack - 技术栈分析
 
 ## 描述

@@ -1,3 +1,16 @@
+---
+name: plugin
+description: "辅助开发 Hot Docs 插件，包括官方示例插件和第三方插件开发指导（Hot Docs 特有）"
+category: development
+priority: required
+required_before: [branch, arch]
+required_after: [test, docs, commit]
+auto_trigger: false
+hot_docs_specific: true
+branch_required: true
+tags: [development, plugin, hot-docs, ecosystem]
+---
+
 # /plugin - 插件开发专家
 
 ## 描述

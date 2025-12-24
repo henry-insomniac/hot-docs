@@ -1,3 +1,16 @@
+---
+name: debug
+description: "诊断和修复问题，包括 bug 定位、性能问题、跨平台兼容性（强制分支+TDD）"
+category: development
+priority: required
+required_before: [branch]
+required_after: [test, commit, pr]
+auto_trigger: false
+hot_docs_specific: false
+branch_required: true
+tags: [development, debugging, troubleshooting, tdd]
+---
+
 # /debug - 调试修复专家
 
 ## 描述

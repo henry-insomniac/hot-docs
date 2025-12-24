@@ -1,3 +1,16 @@
+---
+name: todo
+description: "智能管理 docs/todo.md，自动拆分复杂任务、跟踪进度、识别依赖关系和阻塞问题"
+category: management
+priority: required
+required_before: [prd, roadmap]
+required_after: [implement]
+auto_trigger: false
+hot_docs_specific: false
+branch_required: false
+tags: [management, tasks, tracking, planning]
+---
+
 # /todo - 任务管理助手
 
 ## 描述

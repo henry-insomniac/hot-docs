@@ -1,3 +1,16 @@
+---
+name: implement
+description: "基于架构和 TODO 实现新功能，遵循分层原则、类型安全、可测试（强制分支）"
+category: development
+priority: required
+required_before: [branch, arch, todo]
+required_after: [test, commit]
+auto_trigger: false
+hot_docs_specific: false
+branch_required: true
+tags: [development, coding, implementation, tdd]
+---
+
 # /implement - 功能实现助手
 
 ## 描述

@@ -1,3 +1,16 @@
+---
+name: arch
+description: "设计、更新和审查系统架构文档，确保架构清晰、分层合理、可扩展性强"
+category: planning
+priority: required
+required_before: [prd]
+required_after: [implement]
+auto_trigger: false
+hot_docs_specific: true
+branch_required: false
+tags: [planning, architecture, design, hot-docs]
+---
+
 # /arch - 架构设计维护
 
 ## 描述

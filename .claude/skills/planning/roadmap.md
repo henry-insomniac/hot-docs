@@ -1,3 +1,16 @@
+---
+name: roadmap
+description: "规划产品路线图，管理里程碑，协调多个功能模块的开发优先级"
+category: planning
+priority: recommended
+required_before: [prd]
+required_after: [milestone, todo]
+auto_trigger: false
+hot_docs_specific: false
+branch_required: false
+tags: [planning, roadmap, milestone, prioritization]
+---
+
 # /roadmap - 路线图规划
 
 ## 描述
