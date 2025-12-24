@@ -1,0 +1,49 @@
+---
+name: review-pr
+description: "辅助进行 PR 代码审查，提供审查清单和建议"
+category: versioning
+priority: required
+required_before: [pr]
+required_after: []
+auto_trigger: false
+hot_docs_specific: false
+branch_required: false
+tags: [versioning, git, review, pull-request]
+---
+
+# /review-pr - PR 审查助手
+
+## 描述
+辅助进行 PR 代码审查，生成审查报告。
+
+## 审查维度
+- 代码质量
+- 架构合规性
+- 测试覆盖
+- 文档完整性
+- 向后兼容性
+- 性能影响
+
+## 工作流程
+1. 拉取 PR 分支到本地
+2. 分析代码变更（git diff）
+3. 运行自动化检查（lint/test/typecheck）
+4. 执行架构合规性检查
+5. 生成审查报告
+6. 提供改进建议
+7. 提交审查意见（gh pr review）
+
+## 输入示例
+```
+/review-pr 45  # 审查 PR #45
+/review-pr https://github.com/org/repo/pull/45
+/review-pr --self  # 自我审查当前分支
+```
+
+## 审查报告
+- 概览（完成度/复杂度/风险）
+- 优点分析
+- 问题与建议
+- 架构合规性检查
+- 测试覆盖分析
+- 审查结论

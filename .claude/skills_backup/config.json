@@ -1,0 +1,371 @@
+{
+  "version": "1.0.0",
+  "project": "hot-docs",
+  "description": "Hot Docs 项目 Claude Skills 配置",
+
+  "skills": {
+    "planning": {
+      "prd": {
+        "name": "需求文档管理",
+        "description": "编写、更新、审查产品需求文档（PRD）",
+        "relatedFiles": ["docs/requirements.md"],
+        "tags": ["planning", "product", "requirements"]
+      },
+      "arch": {
+        "name": "架构设计维护",
+        "description": "设计、更新、审查系统架构文档",
+        "relatedFiles": ["docs/architecture.md"],
+        "tags": ["planning", "architecture", "design"]
+      },
+      "tech-stack": {
+        "name": "技术栈分析",
+        "description": "分析、选型和更新技术栈决策",
+        "relatedFiles": ["docs/tech-stack.md", "package.json"],
+        "tags": ["planning", "technology", "dependencies"]
+      },
+      "roadmap": {
+        "name": "路线图规划",
+        "description": "规划产品路线图，管理里程碑",
+        "relatedFiles": ["docs/todo.md", "docs/requirements.md"],
+        "tags": ["planning", "roadmap", "milestone"]
+      }
+    },
+
+    "management": {
+      "todo": {
+        "name": "任务管理助手",
+        "description": "智能管理 TODO，自动拆分任务、跟踪进度",
+        "relatedFiles": ["docs/todo.md"],
+        "tags": ["management", "tasks", "tracking"]
+      },
+      "milestone": {
+        "name": "里程碑跟踪",
+        "description": "跟踪里程碑进度，生成状态报告",
+        "relatedFiles": ["docs/todo.md", "CHANGELOG.md"],
+        "tags": ["management", "milestone", "progress"]
+      }
+    },
+
+    "development": {
+      "implement": {
+        "name": "功能实现助手",
+        "description": "基于架构和 TODO 实现新功能",
+        "relatedFiles": ["packages/*/src/**/*.ts"],
+        "tags": ["development", "implementation", "coding"]
+      },
+      "plugin": {
+        "name": "插件开发专家",
+        "description": "辅助开发 Hot Docs 插件（Hot Docs 特有）",
+        "relatedFiles": ["packages/plugin-*/**/*", "docs/plugin-development.md"],
+        "tags": ["development", "plugin", "hot-docs-specific"]
+      },
+      "theme": {
+        "name": "主题开发专家",
+        "description": "辅助开发 Hot Docs 主题（Hot Docs 特有）",
+        "relatedFiles": ["packages/theme-*/**/*", "docs/theme-development.md"],
+        "tags": ["development", "theme", "hot-docs-specific"]
+      },
+      "refactor": {
+        "name": "代码重构助手",
+        "description": "系统性重构代码，保持架构清晰",
+        "relatedFiles": ["packages/*/src/**/*.ts"],
+        "tags": ["development", "refactor", "quality"]
+      },
+      "debug": {
+        "name": "调试修复专家",
+        "description": "诊断和修复问题",
+        "relatedFiles": ["packages/*/src/**/*.ts"],
+        "tags": ["development", "debug", "troubleshooting"]
+      }
+    },
+
+    "quality": {
+      "review": {
+        "name": "代码审查助手",
+        "description": "执行代码审查，确保质量和规范",
+        "relatedFiles": ["packages/*/src/**/*.ts"],
+        "tags": ["quality", "review", "code-quality"]
+      },
+      "test": {
+        "name": "测试编写助手",
+        "description": "编写和维护测试用例",
+        "relatedFiles": ["packages/*/__tests__/**/*.test.ts"],
+        "tags": ["quality", "testing", "coverage"]
+      },
+      "perf": {
+        "name": "性能优化专家",
+        "description": "性能分析与优化",
+        "relatedFiles": ["packages/*/src/**/*.ts"],
+        "tags": ["quality", "performance", "optimization"]
+      },
+      "security": {
+        "name": "安全审计专家",
+        "description": "安全审计与加固",
+        "relatedFiles": ["packages/*/src/**/*.ts", "package.json"],
+        "tags": ["quality", "security", "audit"]
+      }
+    },
+
+    "documentation": {
+      "docs": {
+        "name": "技术文档助手",
+        "description": "编写 API 文档、架构文档、技术规范",
+        "relatedFiles": ["docs/**/*.md"],
+        "tags": ["documentation", "api", "technical"]
+      },
+      "guide": {
+        "name": "用户指南助手",
+        "description": "编写用户教程、快速开始、最佳实践",
+        "relatedFiles": ["docs/guide/**/*.md", "README.md"],
+        "tags": ["documentation", "guide", "tutorial"]
+      },
+      "contributing": {
+        "name": "贡献指南助手",
+        "description": "编写开源贡献指南、行为准则",
+        "relatedFiles": ["CONTRIBUTING.md", "CODE_OF_CONDUCT.md"],
+        "tags": ["documentation", "contributing", "opensource"]
+      }
+    },
+
+    "tools": {
+      "analyze": {
+        "name": "代码库深度分析",
+        "description": "分析代码库结构、依赖关系、技术债务",
+        "relatedFiles": ["packages/*/src/**/*.ts"],
+        "tags": ["tools", "analysis", "metrics"]
+      },
+      "migrate": {
+        "name": "迁移升级助手",
+        "description": "辅助版本迁移和升级",
+        "relatedFiles": ["docs/migration-*.md", "scripts/migrate-*.ts"],
+        "tags": ["tools", "migration", "upgrade"]
+      },
+      "build": {
+        "name": "构建打包助手",
+        "description": "辅助构建和打包配置",
+        "relatedFiles": ["scripts/build.mjs", "Dockerfile"],
+        "tags": ["tools", "build", "packaging"]
+      },
+      "deploy": {
+        "name": "部署配置助手",
+        "description": "辅助部署配置和执行",
+        "relatedFiles": [".github/workflows/**/*.yml", "Dockerfile"],
+        "tags": ["tools", "deploy", "ci-cd"]
+      }
+    },
+
+    "versioning": {
+      "branch": {
+        "name": "分支创建与管理",
+        "description": "智能创建和管理 Git 分支",
+        "relatedFiles": [],
+        "tags": ["versioning", "git", "branch"]
+      },
+      "sync": {
+        "name": "分支同步管理",
+        "description": "同步主分支最新代码，处理合并冲突",
+        "relatedFiles": [],
+        "tags": ["versioning", "git", "sync", "merge"]
+      },
+      "commit": {
+        "name": "规范化提交",
+        "description": "生成符合 Conventional Commits 规范的提交",
+        "relatedFiles": [],
+        "tags": ["versioning", "git", "commit", "conventional-commits"]
+      },
+      "pr": {
+        "name": "PR 创建与管理",
+        "description": "创建和管理 Pull Request",
+        "relatedFiles": [".github/PULL_REQUEST_TEMPLATE.md"],
+        "tags": ["versioning", "git", "pull-request"]
+      },
+      "review-pr": {
+        "name": "PR 审查助手",
+        "description": "辅助进行 PR 代码审查",
+        "relatedFiles": [],
+        "tags": ["versioning", "git", "review", "pull-request"]
+      },
+      "release": {
+        "name": "版本发布助手",
+        "description": "完整的版本发布流程管理",
+        "relatedFiles": ["package.json", "CHANGELOG.md"],
+        "tags": ["versioning", "release", "publish"]
+      },
+      "changelog": {
+        "name": "变更日志生成",
+        "description": "生成和维护 CHANGELOG.md",
+        "relatedFiles": ["CHANGELOG.md"],
+        "tags": ["versioning", "changelog", "release-notes"]
+      }
+    }
+  },
+
+  "workflows": {
+    "new-feature": {
+      "name": "新功能开发",
+      "description": "完整的新功能开发流程（强制分支：feature/*）",
+      "branchRequired": true,
+      "branchPattern": "feature/<scope>/<description>",
+      "steps": [
+        "/prd",
+        "/arch",
+        "/branch",
+        "/todo",
+        "/implement",
+        "/test",
+        "/docs",
+        "/commit",
+        "/sync",
+        "/review-pr --self",
+        "/pr"
+      ]
+    },
+    "bug-fix": {
+      "name": "Bug 修复",
+      "description": "Bug 修复流程（强制分支：fix/*，TDD 驱动）",
+      "branchRequired": true,
+      "branchPattern": "fix/<scope>/<issue>-<description>",
+      "steps": [
+        "/branch",
+        "/debug",
+        "/test",
+        "/commit",
+        "/sync",
+        "/review-pr --self",
+        "/pr"
+      ]
+    },
+    "refactor": {
+      "name": "代码重构",
+      "description": "代码重构流程（强制分支：refactor/*，测试保护）",
+      "branchRequired": true,
+      "branchPattern": "refactor/<scope>/<description>",
+      "steps": [
+        "/branch",
+        "/test",
+        "/refactor",
+        "/test",
+        "/commit",
+        "/sync",
+        "/review-pr --self",
+        "/pr"
+      ]
+    },
+    "plugin-development": {
+      "name": "插件开发",
+      "description": "Hot Docs 插件开发流程（强制分支：feature/plugins/*）",
+      "branchRequired": true,
+      "branchPattern": "feature/plugins/<plugin-name>",
+      "steps": [
+        "/branch",
+        "/plugin",
+        "/test",
+        "/docs",
+        "/commit",
+        "/pr"
+      ]
+    },
+    "theme-development": {
+      "name": "主题开发",
+      "description": "Hot Docs 主题开发流程（强制分支：feature/themes/*）",
+      "branchRequired": true,
+      "branchPattern": "feature/themes/<theme-name>",
+      "steps": [
+        "/branch",
+        "/theme",
+        "/docs",
+        "/commit",
+        "/pr"
+      ]
+    },
+    "performance-optimization": {
+      "name": "性能优化",
+      "description": "性能分析和优化流程（强制分支：refactor/perf/*）",
+      "branchRequired": true,
+      "branchPattern": "refactor/perf/<description>",
+      "steps": [
+        "/branch",
+        "/perf",
+        "/refactor",
+        "/test",
+        "/commit",
+        "/pr"
+      ]
+    },
+    "code-review": {
+      "name": "代码审查",
+      "description": "代码审查流程",
+      "steps": [
+        "/review-pr",
+        "/commit"
+      ]
+    },
+    "release": {
+      "name": "版本发布",
+      "description": "版本发布流程",
+      "steps": [
+        "/milestone",
+        "/changelog",
+        "/build",
+        "/release"
+      ]
+    },
+    "opensource-preparation": {
+      "name": "开源准备",
+      "description": "开源发布准备流程",
+      "steps": [
+        "/contributing",
+        "/guide",
+        "/security",
+        "/release"
+      ]
+    }
+  },
+
+  "hotDocsSpecific": {
+    "architecture": {
+      "layers": [
+        "Foundation",
+        "Core",
+        "Adapters",
+        "Runtime",
+        "Ecosystem"
+      ],
+      "principles": [
+        "静态优先",
+        "分层清晰",
+        "插件安全边界",
+        "主题可插拔性"
+      ]
+    },
+    "scopes": [
+      "core",
+      "dev-server",
+      "runtime",
+      "cli",
+      "plugins",
+      "themes",
+      "content",
+      "build",
+      "docs"
+    ],
+    "branchProtection": {
+      "enabled": true,
+      "protectedBranches": ["main", "master"],
+      "rules": {
+        "noDirectCommits": true,
+        "requirePR": true,
+        "requireBranchNaming": true,
+        "requireTests": true
+      },
+      "branchTypes": {
+        "feature": "feature/<scope>/<description>",
+        "fix": "fix/<scope>/<issue>-<description>",
+        "refactor": "refactor/<scope>/<description>",
+        "hotfix": "hotfix/<version>-<description>",
+        "docs": "docs/<description>",
+        "chore": "chore/<description>"
+      }
+    }
+  }
+}

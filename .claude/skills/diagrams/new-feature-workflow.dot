@@ -1,0 +1,47 @@
+digraph new_feature_workflow {
+    rankdir=TB;
+    node [shape=box, style=rounded, fontname="Arial"];
+    graph [fontname="Arial", label="Hot Docs 新功能开发流程", labelloc=t, fontsize=16];
+
+    // 节点定义
+    start [label="用户：开发新功能", shape=ellipse, style=filled, fillcolor=lightblue];
+    prd [label="/prd\n需求文档", fillcolor=lightgreen];
+    arch [label="/arch\n架构设计", fillcolor=lightgreen];
+    branch [label="/branch\n创建分支\n(feature/*)", fillcolor=yellow, penwidth=3];
+    todo [label="/todo\n任务拆分", fillcolor=lightgreen];
+    implement [label="/implement\n实现功能", fillcolor=yellow, penwidth=3];
+    test [label="/test\n编写测试", fillcolor=yellow, penwidth=3];
+    docs [label="/docs\n编写文档", fillcolor=lightgreen];
+    commit [label="/commit\n提交代码", fillcolor=yellow, penwidth=3];
+    sync [label="/sync\n同步主分支", fillcolor=lightgreen];
+    review [label="/review-pr --self\n自我审查", fillcolor=lightgreen];
+    pr [label="/pr\n创建 PR", fillcolor=yellow, penwidth=3];
+    end [label="合并到 main", shape=ellipse, style=filled, fillcolor=lightgreen];
+
+    // 决策点
+    test_pass [label="测试通过？", shape=diamond, fillcolor=lightyellow];
+    review_pass [label="审查通过？", shape=diamond, fillcolor=lightyellow];
+
+    // 主流程
+    start -> prd;
+    prd -> arch;
+    arch -> branch [label="【强制】", color=red, penwidth=2, fontcolor=red];
+    branch -> todo;
+    todo -> implement;
+    implement -> test [label="【TDD推荐】", color=blue, penwidth=2, fontcolor=blue];
+    test -> test_pass;
+    test_pass -> docs [label="是", color=green, penwidth=2];
+    test_pass -> implement [label="否\n修复问题", color=red];
+    docs -> commit;
+    commit -> sync;
+    sync -> review;
+    review -> review_pass;
+    review_pass -> pr [label="是", color=green, penwidth=2];
+    review_pass -> implement [label="否\n继续改进", color=orange];
+    pr -> end [label="【强制】", color=red, penwidth=2, fontcolor=red];
+
+    // 分支保护说明
+    note [label="⚠️ 分支保护规则\n• 禁止直接推送到 main\n• 所有变更必须通过 PR\n• 测试必须通过\n• 至少一次代码审查",
+          shape=note, style=filled, fillcolor=lightyellow];
+    end -> note [style=dashed, dir=none];
+}

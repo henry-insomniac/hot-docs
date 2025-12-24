@@ -1,0 +1,50 @@
+digraph plugin_dev_workflow {
+    rankdir=TB;
+    node [shape=box, style=rounded, fontname="Arial"];
+    graph [fontname="Arial", label="Hot Docs 插件开发流程", labelloc=t, fontsize=16];
+
+    // 节点定义
+    start [label="设计插件功能", shape=ellipse, style=filled, fillcolor=lightblue];
+    branch [label="/branch\n创建插件分支\n(feature/plugins/<name>)", fillcolor=yellow, penwidth=3];
+    plugin_design [label="/plugin\n设计插件架构\n• 功能范围\n• API 设计\n• 生命周期钩子", fillcolor=lightgreen];
+
+    // 实现阶段子图
+    subgraph cluster_implementation {
+        label="实现阶段";
+        style=filled;
+        fillcolor="#e6f3ff";
+        fontname="Arial";
+
+        manifest [label="manifest.json\n• 插件元数据\n• 依赖声明\n• Capabilities", fillcolor=white];
+        entry [label="index.ts\n入口文件", fillcolor=white];
+        hooks [label="生命周期钩子\n• onContentLoad\n• onMarkdownRender\n• onPageGenerate", fillcolor=white];
+        types [label="TypeScript 类型\n• 类型安全\n• IDE 支持", fillcolor=white];
+    }
+
+    // 安全边界检查
+    security [label="/security\n安全边界审查\n• 文件系统访问\n• 插件隔离\n• XSS 防护", fillcolor="#ffcccc", penwidth=2];
+    test [label="/test\n编写插件测试\n• 单元测试\n• 集成测试", fillcolor=yellow, penwidth=3];
+    docs [label="/docs\n编写插件文档\n• README\n• API 文档\n• 示例代码", fillcolor=lightgreen];
+    commit [label="/commit\n提交代码", fillcolor=yellow, penwidth=3];
+    pr [label="/pr\n创建 PR", fillcolor=yellow, penwidth=3];
+    end [label="插件完成", shape=ellipse, style=filled, fillcolor=lightgreen];
+
+    // 主流程
+    start -> branch [label="【强制】", color=red, penwidth=2, fontcolor=red];
+    branch -> plugin_design;
+    plugin_design -> manifest;
+    manifest -> entry;
+    entry -> hooks;
+    hooks -> types;
+    types -> security [label="Hot Docs 特有", color=blue, penwidth=2, fontcolor=blue];
+    security -> test;
+    test -> docs;
+    docs -> commit;
+    commit -> pr [label="【强制】", color=red, penwidth=2, fontcolor=red];
+    pr -> end;
+
+    // 插件规范说明
+    plugin_note [label="Hot Docs 插件规范\n• manifest.json 必填字段\n• 必须实现至少一个生命周期钩子\n• 禁止直接执行 shell 命令\n• 文件访问限制在工作区内\n• 必须提供 TypeScript 类型",
+                 shape=note, style=filled, fillcolor="#ffffcc"];
+    end -> plugin_note [style=dashed, dir=none];
+}

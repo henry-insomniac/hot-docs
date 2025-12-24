@@ -1,0 +1,51 @@
+digraph theme_dev_workflow {
+    rankdir=TB;
+    node [shape=box, style=rounded, fontname="Arial"];
+    graph [fontname="Arial", label="Hot Docs 主题开发流程", labelloc=t, fontsize=16];
+
+    // 节点定义
+    start [label="设计主题风格", shape=ellipse, style=filled, fillcolor=lightblue];
+    branch [label="/branch\n创建主题分支\n(feature/themes/<name>)", fillcolor=yellow, penwidth=3];
+    theme_design [label="/theme\n设计主题架构\n• 布局结构\n• 样式系统\n• 组件设计", fillcolor=lightgreen];
+
+    // 实现阶段子图
+    subgraph cluster_implementation {
+        label="实现阶段";
+        style=filled;
+        fillcolor="#fff0e6";
+        fontname="Arial";
+
+        layout [label="布局文件\n• index.html\n• post.html\n• archive.html", fillcolor=white];
+        styles [label="样式文件\n• CSS/SCSS\n• Design Tokens\n• 响应式设计", fillcolor=white];
+        components [label="组件\n• Header\n• Footer\n• Sidebar\n• TOC", fillcolor=white];
+        tokens [label="Design Tokens\n• 颜色\n• 字体\n• 间距\n• 断点", fillcolor=white];
+    }
+
+    // 可访问性和性能
+    accessibility [label="可访问性检查\n• Semantic HTML\n• ARIA 标签\n• 键盘导航\n• 对比度", fillcolor="#ccffcc"];
+    performance [label="/perf\n性能优化\n• 首屏时间 < 2s\n• CSS 体积优化\n• 字体加载策略", fillcolor=lightblue];
+
+    docs [label="/docs\n编写主题文档\n• 使用指南\n• 配置项说明\n• 定制化指南", fillcolor=lightgreen];
+    commit [label="/commit\n提交代码", fillcolor=yellow, penwidth=3];
+    pr [label="/pr\n创建 PR", fillcolor=yellow, penwidth=3];
+    end [label="主题完成", shape=ellipse, style=filled, fillcolor=lightgreen];
+
+    // 主流程
+    start -> branch [label="【强制】", color=red, penwidth=2, fontcolor=red];
+    branch -> theme_design;
+    theme_design -> layout;
+    layout -> styles;
+    styles -> components;
+    components -> tokens;
+    tokens -> accessibility [label="Hot Docs 特有", color=blue, penwidth=2, fontcolor=blue];
+    accessibility -> performance;
+    performance -> docs;
+    docs -> commit;
+    commit -> pr [label="【强制】", color=red, penwidth=2, fontcolor=red];
+    pr -> end;
+
+    // 主题规范说明
+    theme_note [label="Hot Docs 主题规范\n• 必须支持亮/暗模式\n• 必须响应式适配（移动端）\n• 首屏加载 < 2s\n• 符合 WCAG 2.1 AA 标准\n• 必须提供 Design Tokens",
+                shape=note, style=filled, fillcolor="#ffffcc"];
+    end -> theme_note [style=dashed, dir=none];
+}

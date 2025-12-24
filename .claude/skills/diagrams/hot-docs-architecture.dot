@@ -1,0 +1,109 @@
+digraph hot_docs_architecture {
+    rankdir=TB;
+    node [shape=box, style="rounded,filled", fontname="Arial"];
+    graph [fontname="Arial", label="Hot Docs 五层架构", labelloc=t, fontsize=18, ranksep=1.2];
+
+    // 层级定义
+    subgraph cluster_ecosystem {
+        label="Ecosystem Layer (生态层)";
+        style="filled,bold";
+        fillcolor="#e6f7ff";
+        fontname="Arial";
+        fontsize=14;
+
+        plugins [label="Plugins\n插件系统\n• Mermaid\n• Search\n• Analytics", fillcolor="#b3e0ff"];
+        themes [label="Themes\n主题系统\n• Default\n• Minimalist\n• Doc", fillcolor="#b3e0ff"];
+        cli_tools [label="CLI Tools\n命令行工具\n• init\n• dev\n• build\n• preview", fillcolor="#b3e0ff"];
+    }
+
+    subgraph cluster_runtime {
+        label="Runtime Layer (运行时层)";
+        style="filled,bold";
+        fillcolor="#fff7e6";
+        fontname="Arial";
+        fontsize=14;
+
+        router [label="Router\n路由器\n• SPA 路由\n• History API", fillcolor="#ffe6b3"];
+        state_mgmt [label="State Management\n状态管理\n• Page State\n• Theme State", fillcolor="#ffe6b3"];
+        components [label="UI Components\n界面组件\n• Navigation\n• TOC\n• Search UI", fillcolor="#ffe6b3"];
+    }
+
+    subgraph cluster_adapters {
+        label="Adapters Layer (适配器层)";
+        style="filled,bold";
+        fillcolor="#f0ffe6";
+        fontname="Arial";
+        fontsize=14;
+
+        dev_server [label="Dev Server\n开发服务器\n• Hot Reload\n• WebSocket\n• File Watcher", fillcolor="#d9ffb3"];
+        build_system [label="Build System\n构建系统\n• Static HTML\n• Assets Bundle\n• Optimization", fillcolor="#d9ffb3"];
+        plugin_loader [label="Plugin Loader\n插件加载器\n• Discovery\n• Lifecycle\n• Isolation", fillcolor="#d9ffb3"];
+    }
+
+    subgraph cluster_core {
+        label="Core Layer (核心层)";
+        style="filled,bold";
+        fillcolor="#ffe6f0";
+        fontname="Arial";
+        fontsize=14;
+
+        content_index [label="ContentIndex\n内容索引\n• Parse Markdown\n• Extract Metadata\n• Build Index", fillcolor="#ffb3d9"];
+        markdown_engine [label="Markdown Engine\nMarkdown 引擎\n• Parse\n• Transform\n• Render", fillcolor="#ffb3d9"];
+        plugin_ctx [label="PluginContext\n插件上下文\n• API 接口\n• Hooks\n• Data Access", fillcolor="#ffb3d9"];
+    }
+
+    subgraph cluster_foundation {
+        label="Foundation Layer (基础层)";
+        style="filled,bold";
+        fillcolor="#f0f0f0";
+        fontname="Arial";
+        fontsize=14;
+
+        fs_utils [label="File System Utils\n文件系统工具\n• Path Normalize\n• File Watch\n• Safe Read/Write", fillcolor="#d9d9d9"];
+        config_mgr [label="Config Manager\n配置管理\n• hot-docs.config.ts\n• Validation\n• Merge", fillcolor="#d9d9d9"];
+        logger [label="Logger\n日志系统\n• Debug\n• Info\n• Error", fillcolor="#d9d9d9"];
+    }
+
+    // 层级依赖关系（自上而下）
+    plugins -> plugin_loader [penwidth=2, color="#0066cc"];
+    themes -> build_system [penwidth=2, color="#0066cc"];
+    cli_tools -> dev_server [penwidth=2, color="#0066cc"];
+    cli_tools -> build_system [penwidth=2, color="#0066cc"];
+
+    router -> content_index [penwidth=2, color="#0066cc"];
+    state_mgmt -> content_index [penwidth=2, color="#0066cc"];
+    components -> plugin_ctx [penwidth=2, color="#0066cc"];
+
+    dev_server -> content_index [penwidth=2, color="#0066cc"];
+    build_system -> markdown_engine [penwidth=2, color="#0066cc"];
+    plugin_loader -> plugin_ctx [penwidth=2, color="#0066cc"];
+
+    content_index -> fs_utils [penwidth=2, color="#0066cc"];
+    markdown_engine -> config_mgr [penwidth=2, color="#0066cc"];
+    plugin_ctx -> logger [penwidth=2, color="#0066cc"];
+
+    // 架构原则说明
+    principles [shape=plaintext, label=<
+        <table border="1" cellspacing="0" cellpadding="8" bgcolor="#ffffcc">
+            <tr><td colspan="2" bgcolor="#ffcc00"><b>架构原则</b></td></tr>
+            <tr><td align="left">1. 静态优先</td><td align="left">SSG 优于 SSR，性能至上</td></tr>
+            <tr><td align="left">2. 分层清晰</td><td align="left">禁止跨层依赖，单向依赖</td></tr>
+            <tr><td align="left">3. 插件安全边界</td><td align="left">文件系统隔离，禁止 shell 执行</td></tr>
+            <tr><td align="left">4. 主题可插拔性</td><td align="left">主题与核心解耦，易于切换</td></tr>
+        </table>
+    >];
+
+    // 依赖方向说明
+    dep_rule [shape=plaintext, label=<
+        <table border="1" cellspacing="0" cellpadding="8" bgcolor="#ffe6e6">
+            <tr><td colspan="2" bgcolor="#ff6666"><b>依赖规则</b></td></tr>
+            <tr><td align="left">✓ 允许</td><td align="left">上层 → 下层</td></tr>
+            <tr><td align="left">✓ 允许</td><td align="left">同层横向（谨慎）</td></tr>
+            <tr><td align="left">✗ 禁止</td><td align="left">下层 → 上层</td></tr>
+            <tr><td align="left">✗ 禁止</td><td align="left">跨层依赖</td></tr>
+        </table>
+    >];
+
+    // 布局调整
+    {rank=same; principles; dep_rule;}
+}
