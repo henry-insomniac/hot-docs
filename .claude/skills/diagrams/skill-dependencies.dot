@@ -1,0 +1,160 @@
+digraph skill_dependencies {
+    rankdir=LR;
+    node [shape=box, style="rounded,filled", fontname="Arial"];
+    graph [fontname="Arial", label="Hot Docs Skills 依赖关系图", labelloc=t, fontsize=16, ranksep=1.5];
+
+    // 按分类分组
+    subgraph cluster_planning {
+        label="Planning (规划)";
+        style=filled;
+        fillcolor="#e6f7ff";
+        fontname="Arial";
+
+        prd [label="/prd\n需求文档", fillcolor="#b3e0ff"];
+        arch [label="/arch\n架构设计", fillcolor="#b3e0ff"];
+        tech_stack [label="/tech-stack\n技术栈", fillcolor="#b3e0ff"];
+        roadmap [label="/roadmap\n路线图", fillcolor="#b3e0ff"];
+    }
+
+    subgraph cluster_management {
+        label="Management (管理)";
+        style=filled;
+        fillcolor="#f0ffe6";
+        fontname="Arial";
+
+        todo [label="/todo\n任务管理", fillcolor="#d9ffb3"];
+        milestone [label="/milestone\n里程碑", fillcolor="#d9ffb3"];
+    }
+
+    subgraph cluster_development {
+        label="Development (开发)";
+        style=filled;
+        fillcolor="#fff7e6";
+        fontname="Arial";
+
+        implement [label="/implement\n功能实现", fillcolor="#ffe6b3", penwidth=2];
+        plugin [label="/plugin\n插件开发", fillcolor="#ffe6b3"];
+        theme [label="/theme\n主题开发", fillcolor="#ffe6b3"];
+        refactor [label="/refactor\n代码重构", fillcolor="#ffe6b3"];
+        debug [label="/debug\n调试修复", fillcolor="#ffe6b3"];
+    }
+
+    subgraph cluster_quality {
+        label="Quality (质量)";
+        style=filled;
+        fillcolor="#ffe6f0";
+        fontname="Arial";
+
+        review [label="/review\n代码审查", fillcolor="#ffb3d9"];
+        test [label="/test\n测试编写", fillcolor="#ffb3d9", penwidth=2];
+        perf [label="/perf\n性能优化", fillcolor="#ffb3d9"];
+        security [label="/security\n安全审计", fillcolor="#ffb3d9"];
+    }
+
+    subgraph cluster_documentation {
+        label="Documentation (文档)";
+        style=filled;
+        fillcolor="#f0e6ff";
+        fontname="Arial";
+
+        docs [label="/docs\n技术文档", fillcolor="#d9b3ff"];
+        guide [label="/guide\n用户指南", fillcolor="#d9b3ff"];
+        contributing [label="/contributing\n贡献指南", fillcolor="#d9b3ff"];
+    }
+
+    subgraph cluster_versioning {
+        label="Versioning (版本控制)";
+        style=filled;
+        fillcolor="#ffe6e6";
+        fontname="Arial";
+
+        branch [label="/branch\n分支管理", fillcolor="#ffb3b3", penwidth=2];
+        sync [label="/sync\n同步分支", fillcolor="#ffb3b3"];
+        commit [label="/commit\n规范提交", fillcolor="#ffb3b3", penwidth=2];
+        pr [label="/pr\n创建 PR", fillcolor="#ffb3b3", penwidth=2];
+        review_pr [label="/review-pr\nPR 审查", fillcolor="#ffb3b3"];
+        release [label="/release\n版本发布", fillcolor="#ffb3b3"];
+        changelog [label="/changelog\n变更日志", fillcolor="#ffb3b3"];
+    }
+
+    subgraph cluster_tools {
+        label="Tools (工具)";
+        style=filled;
+        fillcolor="#f0f0f0";
+        fontname="Arial";
+
+        analyze [label="/analyze\n代码分析", fillcolor="#d9d9d9"];
+        migrate [label="/migrate\n迁移升级", fillcolor="#d9d9d9"];
+        build [label="/build\n构建打包", fillcolor="#d9d9d9"];
+        deploy [label="/deploy\n部署配置", fillcolor="#d9d9d9"];
+    }
+
+    // 核心依赖链（红色粗线表示强制流程）
+    prd -> arch [color="#0066cc", penwidth=2];
+    arch -> todo [color="#0066cc", penwidth=2];
+    todo -> implement [color="#0066cc", penwidth=2];
+    implement -> test [color=red, penwidth=3, label="【强制】"];
+    test -> commit [color=red, penwidth=3, label="【强制】"];
+    commit -> pr [color=red, penwidth=3, label="【强制】"];
+
+    // 分支管理流程（红色粗线）
+    branch -> implement [color=red, penwidth=3, label="【必须先创建分支】"];
+    branch -> debug [color=red, penwidth=2];
+    branch -> refactor [color=red, penwidth=2];
+
+    // 代码审查流程
+    review -> implement [color=blue, penwidth=1.5, label="审查后改进"];
+    implement -> review [color=blue, penwidth=1.5, style=dashed];
+
+    // 同步和审查流程
+    commit -> sync [color="#0066cc", penwidth=2];
+    sync -> pr [color="#0066cc", penwidth=2];
+    pr -> review_pr [color=blue, penwidth=1.5];
+
+    // 文档流程
+    implement -> docs [color=orange, penwidth=1.5];
+    docs -> commit [color=orange, penwidth=1.5];
+
+    // 发布流程
+    milestone -> changelog [color="#0066cc", penwidth=2];
+    build -> release [color="#0066cc", penwidth=2];
+    test -> release [color="#0066cc", penwidth=2];
+    changelog -> release [color="#0066cc", penwidth=2];
+
+    // 重构流程（测试保护）
+    test -> refactor [color=red, penwidth=2, label="【测试先行】"];
+    refactor -> test [color=red, penwidth=2, label="【测试保护】"];
+    refactor -> commit [color="#0066cc", penwidth=2];
+
+    // 性能优化流程
+    perf -> refactor [color=orange, penwidth=1.5];
+    perf -> commit [color=orange, penwidth=1.5];
+
+    // 安全审计流程
+    security -> commit [color=purple, penwidth=1.5];
+
+    // 构建部署流程
+    test -> build [color="#0066cc", penwidth=2];
+    build -> deploy [color="#0066cc", penwidth=2];
+
+    // 分析和重构
+    analyze -> refactor [color=gray, penwidth=1.5, style=dashed];
+    analyze -> arch [color=gray, penwidth=1.5, style=dashed];
+
+    // 迁移流程
+    migrate -> docs [color=gray, penwidth=1.5];
+
+    // 图例
+    legend [shape=plaintext, label=<
+        <table border="0" cellspacing="0" cellpadding="4">
+            <tr><td colspan="2" bgcolor="#f0f0f0"><b>图例</b></td></tr>
+            <tr><td><font color="red">━━━</font></td><td>强制流程（必须执行）</td></tr>
+            <tr><td><font color="#0066cc">━━━</font></td><td>推荐流程（建议执行）</td></tr>
+            <tr><td><font color="orange">━━━</font></td><td>可选流程（视情况执行）</td></tr>
+            <tr><td><font color="gray">┄┄┄</font></td><td>辅助流程（支持性作用）</td></tr>
+        </table>
+    >];
+
+    // 图例位置
+    {rank=same; legend; cluster_tools;}
+}

@@ -1,0 +1,66 @@
+digraph perf_optimization_workflow {
+    rankdir=TB;
+    node [shape=box, style=rounded, fontname="Arial"];
+    graph [fontname="Arial", label="Hot Docs 性能优化流程", labelloc=t, fontsize=16];
+
+    // 节点定义
+    start [label="性能问题\n• 首屏加载慢\n• 文件变更响应慢\n• 大规模站点卡顿", shape=ellipse, style=filled, fillcolor="#ffcccc"];
+    branch [label="/branch\n创建优化分支\n(refactor/perf/<desc>)", fillcolor=yellow, penwidth=3];
+
+    // 性能分析阶段
+    subgraph cluster_analysis {
+        label="性能分析";
+        style=filled;
+        fillcolor="#e6f7ff";
+        fontname="Arial";
+
+        perf_analyze [label="/perf analyze\n性能分析", fillcolor=white];
+        profiling [label="性能剖析\n• Chrome DevTools\n• Node.js --inspect\n• Memory Profiler", fillcolor=white];
+        baseline [label="记录基准\n• 首屏时间\n• 内存占用\n• 构建时间\n• 热更新时间", fillcolor=white];
+        bottleneck [label="定位瓶颈\n• CPU 密集操作\n• 内存泄漏\n• 不必要的 I/O", fillcolor=white];
+    }
+
+    // 优化策略决策
+    optimization_strategy [label="选择优化策略\n• 缓存\n• 懒加载\n• 并行化\n• 算法优化", shape=diamond, fillcolor=lightyellow];
+
+    // 实施优化
+    refactor [label="/refactor\n实施优化\n• 增量更新\n• 缓存策略\n• 按需加载", fillcolor=lightblue];
+
+    // 测试保护
+    test [label="/test\n回归测试\n确保功能正确性", fillcolor=yellow, penwidth=3];
+    test_pass [label="测试通过？", shape=diamond, fillcolor=lightyellow];
+
+    // 性能验证
+    perf_verify [label="/perf verify\n性能验证", fillcolor=lightgreen];
+    compare [label="对比基准\n达到目标？", shape=diamond, fillcolor=lightyellow];
+
+    commit [label="/commit\n提交代码", fillcolor=yellow, penwidth=3];
+    pr [label="/pr\n创建 PR", fillcolor=yellow, penwidth=3];
+    end [label="性能优化完成", shape=ellipse, style=filled, fillcolor=lightgreen];
+
+    // 主流程
+    start -> branch [label="【强制】", color=red, penwidth=2, fontcolor=red];
+    branch -> perf_analyze;
+    perf_analyze -> profiling;
+    profiling -> baseline;
+    baseline -> bottleneck;
+    bottleneck -> optimization_strategy;
+
+    optimization_strategy -> refactor;
+    refactor -> test;
+    test -> test_pass;
+    test_pass -> perf_verify [label="是", color=green];
+    test_pass -> refactor [label="否\n修复问题", color=red];
+
+    perf_verify -> compare;
+    compare -> commit [label="是\n达到目标", color=green];
+    compare -> optimization_strategy [label="否\n尝试其他策略", color=orange];
+
+    commit -> pr [label="【强制】", color=red, penwidth=2, fontcolor=red];
+    pr -> end;
+
+    // 性能目标说明
+    perf_note [label="Hot Docs 性能目标\n• 首屏加载 < 2s\n• 文件变更响应 < 1s\n• 支持 2000+ 篇文档\n• 插件链耗时 < 500ms\n• 内存占用合理（< 200MB）",
+               shape=note, style=filled, fillcolor="#ffffcc"];
+    end -> perf_note [style=dashed, dir=none];
+}

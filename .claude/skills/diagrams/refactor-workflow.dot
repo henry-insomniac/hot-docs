@@ -1,0 +1,56 @@
+digraph refactor_workflow {
+    rankdir=TB;
+    node [shape=box, style=rounded, fontname="Arial"];
+    graph [fontname="Arial", label="Hot Docs 代码重构流程 (测试保护)", labelloc=t, fontsize=16];
+
+    // 节点定义
+    start [label="识别重构需求\n• 技术债务\n• 代码异味\n• 架构优化", shape=ellipse, style=filled, fillcolor=lightblue];
+    branch [label="/branch\n创建重构分支\n(refactor/<scope>/<desc>)", fillcolor=yellow, penwidth=3];
+
+    // 前置测试保护
+    test_before [label="/test\n编写/完善测试\n确保现有功能有测试覆盖", fillcolor=yellow, penwidth=3];
+    test_run1 [label="运行测试", shape=diamond, fillcolor=lightyellow];
+    test_baseline [label="记录基准\n• 测试通过数\n• 覆盖率\n• 性能指标", fillcolor=lightgreen];
+
+    // 重构阶段
+    refactor [label="/refactor\n执行重构\n• 保持接口不变\n• 小步快跑\n• 频繁提交", fillcolor=lightblue, penwidth=2];
+
+    // 重构后验证
+    test_run2 [label="运行测试", shape=diamond, fillcolor=lightyellow];
+    test_compare [label="对比基准\n测试数量？\n覆盖率？\n性能？", shape=diamond, fillcolor=lightyellow];
+
+    // 架构审查
+    review_arch [label="/review\n架构审查\n• 分层合规性\n• 依赖方向\n• 可维护性", fillcolor=lightgreen];
+
+    commit [label="/commit\n提交代码", fillcolor=yellow, penwidth=3];
+    sync [label="/sync\n同步主分支", fillcolor=lightgreen];
+    review_pr [label="/review-pr --self\n自我审查", fillcolor=lightgreen];
+    pr [label="/pr\n创建 PR", fillcolor=yellow, penwidth=3];
+    end [label="重构完成", shape=ellipse, style=filled, fillcolor=lightgreen];
+
+    // 主流程
+    start -> branch [label="【强制】", color=red, penwidth=2, fontcolor=red];
+    branch -> test_before [label="【测试保护】", color=red, penwidth=2, fontcolor=red];
+    test_before -> test_run1;
+    test_run1 -> test_baseline [label="全部通过", color=green];
+    test_run1 -> test_before [label="有失败\n修复测试", color=red];
+
+    test_baseline -> refactor;
+    refactor -> test_run2;
+    test_run2 -> test_compare [label="全部通过", color=green];
+    test_run2 -> refactor [label="有失败\n修复代码", color=red];
+
+    test_compare -> review_arch [label="≥ 基准", color=green];
+    test_compare -> refactor [label="< 基准\n补充测试", color=orange];
+
+    review_arch -> commit;
+    commit -> sync;
+    sync -> review_pr;
+    review_pr -> pr;
+    pr -> end [label="【强制】", color=red, penwidth=2, fontcolor=red];
+
+    // 重构原则说明
+    refactor_note [label="重构原则\n• 测试先行，测试保护\n• 小步快跑，频繁提交\n• 保持接口稳定\n• 确保架构合规\n• 不降低测试覆盖率",
+                   shape=note, style=filled, fillcolor="#ffffcc"];
+    end -> refactor_note [style=dashed, dir=none];
+}

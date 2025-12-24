@@ -1,0 +1,62 @@
+digraph release_workflow {
+    rankdir=TB;
+    node [shape=box, style=rounded, fontname="Arial"];
+    graph [fontname="Arial", label="Hot Docs 版本发布流程", labelloc=t, fontsize=16];
+
+    // 节点定义
+    start [label="准备发布", shape=ellipse, style=filled, fillcolor=lightblue];
+
+    // 里程碑检查
+    milestone_check [label="/milestone\n里程碑检查\n• 所有任务完成？\n• 所有 PR 合并？\n• 测试全部通过？", fillcolor=lightgreen];
+    milestone_ready [label="里程碑完成？", shape=diamond, fillcolor=lightyellow];
+
+    // 变更日志
+    changelog_gen [label="/changelog\n生成变更日志\n• 分析提交历史\n• 按类型分组\n• 生成 markdown", fillcolor=lightgreen];
+    changelog_review [label="审查 CHANGELOG\n• 检查完整性\n• 修正错误分类\n• 补充说明", fillcolor=lightgreen];
+
+    // 版本号决策
+    version_decide [label="决定版本号\n• Patch (x.x.X)\n• Minor (x.X.0)\n• Major (X.0.0)", shape=diamond, fillcolor=lightyellow];
+
+    // 构建和测试
+    build [label="/build\n生产构建\n• 完整构建\n• 类型检查\n• Lint 检查", fillcolor=yellow, penwidth=3];
+    build_success [label="构建成功？", shape=diamond, fillcolor=lightyellow];
+
+    test_full [label="/test --full\n完整测试套件\n• 单元测试\n• 集成测试\n• E2E 测试", fillcolor=yellow, penwidth=3];
+    test_success [label="测试通过？", shape=diamond, fillcolor=lightyellow];
+
+    // 发布执行
+    release_exec [label="/release\n执行发布\n• 更新版本号\n• 创建 Git Tag\n• 推送到远程", fillcolor=yellow, penwidth=3];
+
+    // 发布后
+    publish_npm [label="发布到 npm\n• npm publish\n• 验证安装", fillcolor=lightgreen];
+    release_notes [label="发布 Release Notes\n• GitHub Release\n• 附加资产\n• 通知用户", fillcolor=lightgreen];
+
+    end [label="发布完成", shape=ellipse, style=filled, fillcolor=lightgreen];
+
+    // 主流程
+    start -> milestone_check;
+    milestone_check -> milestone_ready;
+    milestone_ready -> changelog_gen [label="是", color=green];
+    milestone_ready -> milestone_check [label="否\n完成剩余任务", color=red];
+
+    changelog_gen -> changelog_review;
+    changelog_review -> version_decide;
+
+    version_decide -> build [label="确定版本", color=blue];
+    build -> build_success;
+    build_success -> test_full [label="是", color=green];
+    build_success -> build [label="否\n修复构建", color=red];
+
+    test_full -> test_success;
+    test_success -> release_exec [label="是", color=green];
+    test_success -> test_full [label="否\n修复测试", color=red];
+
+    release_exec -> publish_npm;
+    publish_npm -> release_notes;
+    release_notes -> end;
+
+    // 发布清单说明
+    release_note [label="发布前清单\n✓ 所有里程碑任务完成\n✓ CHANGELOG.md 更新\n✓ 构建成功\n✓ 所有测试通过\n✓ 文档已更新\n✓ Breaking Changes 已记录",
+                  shape=note, style=filled, fillcolor="#ffffcc"];
+    end -> release_note [style=dashed, dir=none];
+}

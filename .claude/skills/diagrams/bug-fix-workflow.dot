@@ -1,0 +1,46 @@
+digraph bug_fix_workflow {
+    rankdir=TB;
+    node [shape=box, style=rounded, fontname="Arial"];
+    graph [fontname="Arial", label="Hot Docs Bug 修复流程 (TDD 驱动)", labelloc=t, fontsize=16];
+
+    // 节点定义
+    start [label="发现 Bug", shape=ellipse, style=filled, fillcolor="#ffcccc"];
+    branch [label="/branch\n创建修复分支\n(fix/<scope>/<issue>-<desc>)", fillcolor=yellow, penwidth=3];
+    debug [label="/debug\n诊断根因\n• 重现问题\n• 分析日志\n• 定位代码", fillcolor=lightblue];
+
+    // TDD 流程
+    test_write [label="/test\n编写测试\n(TDD: RED)\n应该失败", fillcolor="#ffcccc", penwidth=2];
+    test_fail [label="运行测试", shape=diamond, fillcolor=lightyellow];
+    implement [label="/implement\n修复 Bug\n(TDD: GREEN)", fillcolor="#ccffcc", penwidth=2];
+    test_pass [label="运行测试", shape=diamond, fillcolor=lightyellow];
+    refactor [label="/refactor\n重构\n(TDD: REFACTOR)", fillcolor=lightblue];
+
+    commit [label="/commit\n提交代码", fillcolor=yellow, penwidth=3];
+    sync [label="/sync\n同步主分支", fillcolor=lightgreen];
+    review [label="/review-pr --self\n自我审查", fillcolor=lightgreen];
+    pr [label="/pr\n创建 PR", fillcolor=yellow, penwidth=3];
+    end [label="Bug 已修复", shape=ellipse, style=filled, fillcolor="#ccffcc"];
+
+    // 主流程
+    start -> branch [label="【强制】", color=red, penwidth=2, fontcolor=red];
+    branch -> debug;
+    debug -> test_write [label="TDD: RED", color=red, penwidth=2, fontcolor=red];
+    test_write -> test_fail;
+    test_fail -> implement [label="失败（✓正确）\n测试正确捕获 Bug", color=green];
+    test_fail -> test_write [label="通过（✗错误）\n测试写得不对", color=red];
+
+    implement -> test_pass [label="TDD: GREEN", color=green, penwidth=2, fontcolor=green];
+    test_pass -> refactor [label="通过（✓正确）", color=green];
+    test_pass -> implement [label="失败（✗错误）\n继续修复", color=red];
+
+    refactor -> commit [label="TDD: REFACTOR", color=blue, fontcolor=blue];
+    commit -> sync;
+    sync -> review;
+    review -> pr;
+    pr -> end [label="【强制】", color=red, penwidth=2, fontcolor=red];
+
+    // TDD 说明
+    tdd_note [label="TDD 三步法\n1. RED: 先写测试（失败）\n2. GREEN: 最小改动通过测试\n3. REFACTOR: 重构优化代码",
+              shape=note, style=filled, fillcolor="#ffffcc"];
+    end -> tdd_note [style=dashed, dir=none];
+}
