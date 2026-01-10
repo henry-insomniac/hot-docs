@@ -1,0 +1,51 @@
+digraph docs_workflow {
+    rankdir=TB;
+    node [shape=box, style=rounded, fontname="Arial"];
+    graph [fontname="Arial", label="Hot Docs 文档更新流程", labelloc=t, fontsize=16];
+
+    // 节点定义
+    start [label="用户：更新文档", shape=ellipse, style=filled, fillcolor=lightblue];
+    branch [label="/branch\n创建分支\n(docs/*)", fillcolor=yellow, penwidth=3];
+    doc_type [label="文档类型？", shape=diamond, fillcolor=lightyellow];
+
+    prd [label="/prd\n需求文档", fillcolor=lightgreen];
+    arch [label="/arch\n架构文档", fillcolor=lightgreen];
+    tech_stack [label="/tech-stack\n技术栈", fillcolor=lightgreen];
+    docs [label="/docs\n技术文档", fillcolor=lightgreen];
+    guide [label="/guide\n用户指南", fillcolor=lightgreen];
+    contributing [label="/contributing\n贡献指南", fillcolor=lightgreen];
+
+    edit [label="更新/新增文档\n(docs/*)", fillcolor=lightgreen];
+    review [label="/review\n自检与审阅", fillcolor=lightgreen];
+    commit [label="/commit\n提交变更", fillcolor=yellow, penwidth=3];
+    pr [label="/pr\n创建 PR", fillcolor=yellow, penwidth=3];
+    end [label="合并到 main", shape=ellipse, style=filled, fillcolor=lightgreen];
+
+    // 主流程
+    start -> branch;
+    branch -> doc_type [label="【强制】", color=red, penwidth=2, fontcolor=red];
+
+    doc_type -> prd [label="需求/PRD", color=blue];
+    doc_type -> arch [label="架构", color=blue];
+    doc_type -> tech_stack [label="技术栈", color=blue];
+    doc_type -> docs [label="技术文档", color=blue];
+    doc_type -> guide [label="用户指南", color=blue];
+    doc_type -> contributing [label="贡献指南", color=blue];
+
+    prd -> edit;
+    arch -> edit;
+    tech_stack -> edit;
+    docs -> edit;
+    guide -> edit;
+    contributing -> edit;
+
+    edit -> review;
+    review -> commit;
+    commit -> pr [label="【强制】", color=red, penwidth=2, fontcolor=red];
+    pr -> end;
+
+    // 分支保护说明
+    note [label="⚠️ 分支保护规则\n• 禁止直接推送到 main\n• 文档变更同样必须走 PR\n• 建议：更新对应的 docs/todo.md 与说明",
+          shape=note, style=filled, fillcolor=lightyellow];
+    end -> note [style=dashed, dir=none];
+}
