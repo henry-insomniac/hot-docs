@@ -53,7 +53,7 @@
 #### 阶段 1：结构优化（P0）
 1. **YAML Frontmatter** - 所有 29 个 skills 添加元数据
 2. **独立目录** - 重组为每个 skill 一个文件夹
-3. **可视化流程图** - 15 个 Graphviz 图
+3. **可视化流程图** - 10 个关键 Graphviz 图
 
 **预计时间：** 9-12 小时
 
@@ -101,11 +101,18 @@
 - [x] **OPTIMIZATION_SUMMARY.md** - 项目总结（本文件）
 - [x] **功能分支** - `feature/skills/optimize-superpowers-inspired` 已创建并推送
 
-### 待实施（按阶段 1 计划）
-- [ ] 添加 YAML frontmatter 到所有 skills
-- [ ] 重组目录结构（独立 skill 目录）
-- [ ] 创建 Graphviz 流程图（至少 10 个）
-- [ ] 迁移脚本和验证脚本
+### 阶段 1：结构优化（已完成）
+- [x] 29 个 skills 全部补齐 YAML frontmatter
+- [x] 目录结构重组为独立 skill 目录（每个 skill 一个文件夹）
+- [x] Graphviz 可视化：≥10 个关键流程/架构图
+- [x] 迁移脚本：`scripts/migrate-skills-structure.sh`
+
+### 待实施（阶段 2+）
+- [ ] TDD skill（强制模式）与集成
+- [ ] Debug skill 深化（系统化方法/案例）
+- [ ] 为每个 skill 补齐 examples/templates/checklists
+- [ ] 自动触发研究（可行性验证）
+- [ ] Marketplace 发布准备（可选）
 
 ---
 
@@ -136,14 +143,13 @@
 ## 📅 下一步行动
 
 ### 立即行动（Week 1）
-1. **团队评审** - 讨论并获得批准
-2. **开始实施** - 从阶段 1 任务 1.1 开始（YAML frontmatter）
-3. **持续提交** - 每完成一个子任务就 commit
-4. **文档同步** - 更新 README 和 config.json
+1. **团队评审并合并** - 将本分支合并到 `main`
+2. **开始阶段 2** - 优先补齐 TDD skill 与 Debug 增强
+3. **补齐配套文件** - 为核心 skills 增加 examples/templates/checklists
+4. **可选探索** - 自动触发研究 / Marketplace 打包
 
 ### 短期目标（Week 2-3）
-1. 完成阶段 1（结构优化）
-2. 开始阶段 2（内容增强）
+1. 完成阶段 2（内容增强）
 3. 测试和验证所有变更
 
 ### 长期目标（Week 4+）
@@ -156,9 +162,9 @@
 ## 📈 成功指标
 
 ### 技术指标
-- [ ] 100% skills 有 YAML frontmatter
-- [ ] 100% skills 有独立目录
-- [ ] 至少 10 个 Graphviz 流程图
+- [x] 100% skills 有 YAML frontmatter
+- [x] 100% skills 有独立目录
+- [x] 至少 10 个 Graphviz 流程图
 - [ ] TDD skill 创建并集成
 - [ ] 至少 50% skills 有配套文件
 

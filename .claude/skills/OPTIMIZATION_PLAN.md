@@ -689,9 +689,9 @@ plugin/
 ## ✅ 验收标准
 
 ### 结构优化
-- [ ] 所有 29 个 skills 都有 YAML frontmatter
-- [ ] 目录结构已重组为独立 skill 目录
-- [ ] 至少 10 个关键流程有 Graphviz 图
+- [x] 所有 29 个 skills 都有 YAML frontmatter
+- [x] 目录结构已重组为独立 skill 目录
+- [x] 至少 10 个关键流程有 Graphviz 图
 
 ### 内容增强
 - [ ] TDD skill 完整并可用
@@ -699,9 +699,9 @@ plugin/
 - [ ] 每个 skill 至少有 1 个示例或模板
 
 ### 文档更新
-- [ ] README 更新所有新特性
+- [x] README 更新所有新特性
 - [ ] CHANGELOG 记录所有变更
-- [ ] config.json 支持新元数据
+- [x] config.json 支持新元数据
 
 ### 质量保证
 - [ ] 所有 YAML 语法正确

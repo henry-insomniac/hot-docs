@@ -32,3 +32,6 @@ coverage/
 .hot-docs/
 *.hotdocs.cache
 
+# Allow skill named "build" under .claude/skills (build/ is ignored above)
+!.claude/skills/build/
+!.claude/skills/build/**

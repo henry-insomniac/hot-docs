@@ -255,49 +255,31 @@
 
 ```
 .claude/skills/
-├── planning/           # 规划类 Skills
-│   ├── prd.md
-│   ├── arch.md
-│   ├── tech-stack.md
-│   └── roadmap.md
-├── management/         # 管理类 Skills
-│   ├── todo.md
-│   └── milestone.md
-├── development/        # 开发类 Skills
-│   ├── implement.md
-│   ├── plugin.md       # Hot Docs 特有
-│   ├── theme.md        # Hot Docs 特有
-│   ├── refactor.md
-│   └── debug.md
-├── quality/            # 质量类 Skills
-│   ├── review.md
-│   ├── test.md
-│   ├── perf.md
-│   └── security.md
-├── documentation/      # 文档类 Skills
-│   ├── docs.md
-│   ├── guide.md
-│   └── contributing.md
-├── tools/              # 工具类 Skills
-│   ├── analyze.md
-│   ├── migrate.md
-│   ├── build.md
-│   └── deploy.md
-├── versioning/         # 版本控制类 Skills
-│   ├── branch.md
-│   ├── sync.md
-│   ├── commit.md
-│   ├── pr.md
-│   ├── review-pr.md
-│   ├── release.md
-│   └── changelog.md
-├── workflows/          # 工作流模板
+├── README.md               # 本文件
+├── config.json             # Skills 配置（含 workflows）
+├── BRANCH_PROTECTION.md    # 分支保护规范（必读）
+├── SUPERPOWERS_ANALYSIS.md # Superpowers 对标分析
+├── OPTIMIZATION_PLAN.md    # 优化实施计划
+├── OPTIMIZATION_SUMMARY.md # 优化总结
+├── diagrams/               # Graphviz 流程/架构图
+│   ├── README.md
+│   ├── *.dot
+│   └── render-all.sh
+├── workflows/              # 工作流模板
 │   ├── new-feature.md
 │   ├── bug-fix.md
+│   ├── refactor.md
 │   ├── plugin-development.md
 │   └── release.md
-├── config.json         # Skills 配置
-└── README.md           # 本文件
+├── prd/                    # 每个 Skill 一个目录
+│   ├── SKILL.md            # 主文件（含 YAML frontmatter）
+│   ├── examples/           # 可选
+│   └── templates/          # 可选
+├── arch/
+│   └── SKILL.md
+├── ...                     # 其余 skills（共 29 个）
+└── build/
+    └── SKILL.md
 ```
 
 ---
@@ -308,28 +290,23 @@
 
 ```json
 {
+  "version": "2.0.0",
+  "structure": {
+    "format": "independent-directories",
+    "skillFile": "SKILL.md",
+    "supportingDirs": ["examples", "templates"],
+    "metadataFormat": "yaml-frontmatter"
+  },
   "skills": {
-    "planning": { ... },
-    "management": { ... },
-    "development": { ... },
-    "quality": { ... },
-    "documentation": { ... },
-    "tools": { ... },
-    "versioning": { ... }
+    "prd": { "category": "planning", ... },
+    "arch": { "category": "planning", ... },
+    "...": { ... }
   },
   "workflows": {
-    "new-feature": { ... },
-    "bug-fix": { ... },
-    "plugin-development": { ... },
-    "release": { ... }
+    "new-feature": { "steps": ["/prd", "...", "/pr"] },
+    "bug-fix": { "steps": ["/branch", "...", "/pr"] }
   },
-  "hotDocsSpecific": {
-    "architecture": {
-      "layers": ["Foundation", "Core", "Adapters", "Runtime", "Ecosystem"],
-      "principles": ["静态优先", "分层清晰", ...]
-    },
-    "scopes": ["core", "dev-server", "runtime", ...]
-  }
+  "hotDocsSpecific": { ... }
 }
 ```
 
@@ -425,14 +402,28 @@ Foundation (文件系统/Watch/缓存)
 
 ### 添加新 Skill
 
-1. 在对应分类目录下创建 `<skill-name>.md`
-2. 遵循现有 Skill 文档格式
-3. 更新 `config.json` 添加配置
-4. 更新本 README 的 Skills 列表
+1. 创建目录：`.claude/skills/<skill-id>/`
+2. 添加主文件：`.claude/skills/<skill-id>/SKILL.md`（含 YAML frontmatter）
+3. （可选）补充 `examples/`、`templates/` 等配套文件
+4. 更新 `.claude/skills/config.json` 的 `skills.<skill-id>` 配置
+5. 更新本 README 的 Skills 列表/说明（如有变更）
 
 ### Skill 文档格式
 
 ```markdown
+---
+name: <skill-id>
+description: "一句话说明这个 skill 解决什么问题"
+category: <planning|management|development|quality|documentation|tools|versioning>
+priority: <required|recommended|optional>
+required_before: []
+required_after: []
+auto_trigger: false
+hot_docs_specific: false
+branch_required: false
+tags: [tag1, tag2]
+---
+
 # /<skill-name> - Skill 名称
 
 ## 描述
@@ -463,13 +454,20 @@ Foundation (文件系统/Watch/缓存)
 ## 📞 支持
 
 - **分支保护规范**：**[BRANCH_PROTECTION.md](./BRANCH_PROTECTION.md)** ⚠️ 必读
-- **文档问题**：查看各 Skill 的详细文档（`.claude/skills/<category>/<skill>.md`）
+- **文档问题**：查看各 Skill 的详细文档（`.claude/skills/<skill>/SKILL.md`）
 - **工作流问题**：参考工作流模板（`.claude/skills/workflows/`）
 - **配置问题**：查看 `config.json`
 
 ---
 
 ## 📝 版本历史
+
+### v2.0.0 (2025-12-24)
+- ✨ 独立 Skill 目录结构（`<skill>/SKILL.md`）
+- ✨ YAML frontmatter 元数据（29 个 skills）
+- ✨ Graphviz 可视化（`.claude/skills/diagrams/`）
+- ✨ 工作流模板（`.claude/skills/workflows/`）
+- 🔒 分支保护规范（`BRANCH_PROTECTION.md`）
 
 ### v1.1.0 (2025-12-23)
 - 🔒 **分支保护策略**：强制分支工作流

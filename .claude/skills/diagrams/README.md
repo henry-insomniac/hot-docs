@@ -30,17 +30,21 @@
    - 性能分析、瓶颈定位、优化实施
    - Hot Docs 性能目标和验证方法
 
-7. **release-workflow.dot** - 版本发布流程
+7. **docs-workflow.dot** - 文档更新流程
+   - 需求/架构/技术栈/指南/贡献等文档更新的标准流程
+   - 强制分支保护与 PR 合并
+
+8. **release-workflow.dot** - 版本发布流程
    - 里程碑检查、变更日志、构建测试
    - 完整的发布清单和 npm 发布
 
 ### 架构图
 
-8. **hot-docs-architecture.dot** - Hot Docs 五层架构
+9. **hot-docs-architecture.dot** - Hot Docs 五层架构
    - Foundation → Core → Adapters → Runtime → Ecosystem
    - 架构原则和依赖规则
 
-9. **skill-dependencies.dot** - Skills 依赖关系图
+10. **skill-dependencies.dot** - Skills 依赖关系图
    - 29 个 Skills 的依赖关系网络
    - 强制流程、推荐流程、可选流程的可视化
 
