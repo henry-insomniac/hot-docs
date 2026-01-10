@@ -14,7 +14,7 @@ import {
   loadThemeCss,
   listBlogVirtualPages,
   readContentEntry,
-  renderMarkdownToHtml,
+  renderMarkdownToPage,
   scanContent,
   stripBase,
   trimTrailingSlash,
@@ -138,7 +138,7 @@ export async function startDevServer(options: DevServerOptions = {}): Promise<vo
           const virtual = blogVirtualByRoute.get(route);
           if (virtual) {
             res.writeHead(200, { "content-type": "application/json; charset=utf-8" });
-            res.end(JSON.stringify({ routePath: virtual.routePath, title: virtual.title, html: virtual.html, hash: virtual.hash }));
+            res.end(JSON.stringify({ routePath: virtual.routePath, title: virtual.title, html: virtual.html, toc: [], hash: virtual.hash }));
             return;
           }
 
@@ -148,9 +148,9 @@ export async function startDevServer(options: DevServerOptions = {}): Promise<vo
         }
         const fullPath = path.join(config.contentDir, config.collections[entry.collection]!.dir, entry.relativePath);
         const raw = await fs.readFile(fullPath, "utf8");
-        const html = await renderMarkdownToHtml(raw, { config, entry, filePath: fullPath, ...markdownExtensions });
+        const rendered = await renderMarkdownToPage(raw, { config, entry, filePath: fullPath, ...markdownExtensions });
         res.writeHead(200, { "content-type": "application/json; charset=utf-8" });
-        res.end(JSON.stringify({ routePath: entry.routePath, title: entry.title, html, hash: entry.hash }));
+        res.end(JSON.stringify({ routePath: entry.routePath, title: entry.title, html: rendered.html, toc: rendered.toc, hash: entry.hash }));
         return;
       }
 
@@ -388,6 +388,7 @@ function renderShellHtml(config: HotDocsConfig): string {
         </div>
         <article id="hd-content"></article>
       </main>
+      <aside id="hd-toc"></aside>
     </div>
     <details id="hd-overlay" class="hd-overlay">
       <summary class="hd-overlay-summary">
@@ -531,8 +532,10 @@ const wsUrl = (() => {
 })();
 
 function el(id) { return document.getElementById(id); }
+const appEl = el("hd-app");
 const contentEl = el("hd-content");
 const sidebarEl = el("hd-sidebar");
+const tocEl = el("hd-toc");
 const overlayEl = el("hd-overlay");
 const overlaySummaryEl = el("hd-overlay-summary-text");
 const overlayStatusEl = el("hd-overlay-status");
@@ -550,6 +553,26 @@ async function loadPage(routePath) {
   const data = await fetchJson("/__hot_docs__/page?route=" + encodeURIComponent(routePath));
   document.title = data.title;
   contentEl.innerHTML = data.html;
+  renderToc(data.toc || []);
+}
+
+function renderToc(items) {
+  if (!tocEl || !appEl) return;
+  if (!Array.isArray(items) || items.length === 0) {
+    tocEl.innerHTML = "";
+    appEl.classList.remove("hd-has-toc");
+    return;
+  }
+  const links = items.map((item) => {
+    const level = (item && typeof item.level === "number") ? item.level : 2;
+    const id = item && item.id ? String(item.id) : "";
+    const title = item && item.title ? String(item.title) : "";
+    if (!id || !title) return "";
+    return '<li class="hd-toc-item hd-toc-level-' + level + '"><a href="#' + escapeHtml(id) + '">' + escapeHtml(title) + "</a></li>";
+  }).filter(Boolean).join("");
+
+  tocEl.innerHTML = '<div class="hd-toc-inner"><div class="hd-toc-title">目录</div><ul class="hd-toc-list">' + links + "</ul></div>";
+  appEl.classList.add("hd-has-toc");
 }
 
 function renderNavNode(node) {

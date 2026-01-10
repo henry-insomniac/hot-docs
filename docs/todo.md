@@ -23,7 +23,7 @@
 - [x] 主题 manifest 规范（`package.json#hotDocs`）
 - [x] token 合并：默认主题 → theme.css → 用户覆盖
 - [x] 主题布局模板：Docs（sidebar/main），Blog（list/post/taxonomy）
-- [ ] Docs：TOC 生成与渲染
+- [x] Docs：TOC 生成与渲染
 - [ ] 默认主题细节完善：卡片层级、hover、代码高亮、表格/图表配色
 
 ## M3：插件系统（Ecosystem）
