@@ -89,7 +89,7 @@
 - [x] CI 门禁：GitHub Actions 运行 `pnpm typecheck` / `pnpm test` / `pnpm site:build`
 - [x] 配置契约稳定：`loadConfig` 增加 schema 校验与可读错误信息（含 collections/site/dev/theme/plugins）
 - [x] Docs TOC：生成与渲染（dev/build 行为一致）
-- [ ] 文档补齐：新增 v1.0 发布流程（版本号、变更日志、发包/Tag 规则）
+- [x] 文档补齐：新增 v1.0 发布流程（`docs/release-process.md`）与 `CHANGELOG.md` 约定
 
 ## 0. 计划约束与假设
 
