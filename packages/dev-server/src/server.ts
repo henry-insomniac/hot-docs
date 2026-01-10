@@ -7,7 +7,15 @@ import { URL } from "node:url";
 import chokidar from "chokidar";
 import WebSocket, { WebSocketServer } from "ws";
 
-import { loadConfig, renderMarkdownToHtml, scanContent, type HotDocsConfig } from "@hot-docs/core";
+import {
+  DEFAULT_THEME_CSS,
+  loadConfig,
+  renderMarkdownToHtml,
+  scanContent,
+  stripBase,
+  trimTrailingSlash,
+  type HotDocsConfig
+} from "@hot-docs/core";
 
 type DevServerOptions = {
   configPath?: string;
@@ -55,7 +63,7 @@ export async function startDevServer(options: DevServerOptions = {}): Promise<vo
       }
       if (url.pathname === "/__hot_docs__/theme.css") {
         res.writeHead(200, { "content-type": "text/css; charset=utf-8" });
-        res.end(THEME_CSS);
+        res.end(DEFAULT_THEME_CSS);
         return;
       }
       if (url.pathname === "/__hot_docs__/nav") {
@@ -65,7 +73,7 @@ export async function startDevServer(options: DevServerOptions = {}): Promise<vo
         return;
       }
       if (url.pathname === "/__hot_docs__/page") {
-        const route = url.searchParams.get("route") ?? "/";
+        const route = normalizeRoutePath(url.searchParams.get("route") ?? "/");
         const entry = index.entriesByRoute.get(route);
         if (!entry) {
           res.writeHead(404, { "content-type": "application/json; charset=utf-8" });
@@ -74,9 +82,23 @@ export async function startDevServer(options: DevServerOptions = {}): Promise<vo
         }
         const fullPath = path.join(config.contentDir, config.collections[entry.collection]!.dir, entry.relativePath);
         const raw = await fs.readFile(fullPath, "utf8");
-        const html = await renderMarkdownToHtml(raw);
+        const html = await renderMarkdownToHtml(raw, { config, entry, filePath: fullPath });
         res.writeHead(200, { "content-type": "application/json; charset=utf-8" });
         res.end(JSON.stringify({ routePath: entry.routePath, title: entry.title, html, hash: entry.hash }));
+        return;
+      }
+
+      const sitePath = stripBase(config.site.base, url.pathname);
+      if (looksLikeAssetRequest(sitePath)) {
+        const asset = await resolveAssetFilePath(config, sitePath);
+        if (asset) {
+          const contentType = contentTypeByExt(path.extname(asset).toLowerCase());
+          res.writeHead(200, { "content-type": contentType, "cache-control": "no-cache" });
+          res.end(await fs.readFile(asset));
+          return;
+        }
+        res.writeHead(404, { "content-type": "text/plain; charset=utf-8" });
+        res.end("Not Found");
         return;
       }
 
@@ -183,6 +205,11 @@ function escapeHtml(s: string): string {
   return s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
 }
 
+function normalizeRoutePath(routePath: string): string {
+  const normalized = trimTrailingSlash(routePath.trim() || "/");
+  return normalized.startsWith("/") ? normalized : `/${normalized}`;
+}
+
 function filePathToRoute(config: HotDocsConfig, filePath: string): string | undefined {
   const abs = path.resolve(filePath);
   for (const [id, c] of Object.entries(config.collections)) {
@@ -191,7 +218,7 @@ function filePathToRoute(config: HotDocsConfig, filePath: string): string | unde
     const rel = path.relative(root, abs);
     const posixRel = rel.split(path.sep).join("/");
     const withoutExt = posixRel.replace(/\.(md|markdown)$/i, "");
-    const trimmed = withoutExt.endsWith("/index") ? withoutExt.slice(0, -"/index".length) : withoutExt;
+    const trimmed = withoutExt === "index" ? "" : withoutExt.endsWith("/index") ? withoutExt.slice(0, -"/index".length) : withoutExt;
     const base = c.routeBase === "/" ? "" : c.routeBase;
     const joined = `${base}/${trimmed}`.replace(/\/+/g, "/");
     return joined === "" ? "/" : joined;
@@ -199,11 +226,80 @@ function filePathToRoute(config: HotDocsConfig, filePath: string): string | unde
   return undefined;
 }
 
+function looksLikeAssetRequest(sitePath: string): boolean {
+  const pathname = sitePath.split("?")[0]?.split("#")[0] ?? sitePath;
+  const baseName = path.posix.basename(pathname);
+  return baseName.includes(".") && !baseName.endsWith(".");
+}
+
+async function resolveAssetFilePath(config: HotDocsConfig, sitePath: string): Promise<string | undefined> {
+  const candidates = Object.entries(config.collections).sort((a, b) => b[1].routeBase.length - a[1].routeBase.length);
+
+  for (const [, collection] of candidates) {
+    const rel = stripRouteBase(collection.routeBase, sitePath);
+    if (rel === undefined || rel === "") continue;
+    const collectionRoot = path.join(config.contentDir, collection.dir);
+    const abs = path.resolve(collectionRoot, rel);
+    if (!isPathInside(collectionRoot, abs)) continue;
+    try {
+      const stat = await fs.stat(abs);
+      if (stat.isFile()) return abs;
+    } catch {
+      // ignore
+    }
+  }
+
+  return undefined;
+}
+
+function stripRouteBase(routeBase: string, pathname: string): string | undefined {
+  if (routeBase === "/") return pathname.startsWith("/") ? pathname.slice(1) : pathname;
+  if (pathname === routeBase) return "";
+  if (pathname.startsWith(`${routeBase}/`)) return pathname.slice(routeBase.length + 1);
+  return undefined;
+}
+
+function isPathInside(parent: string, child: string): boolean {
+  const rel = path.relative(path.resolve(parent), path.resolve(child));
+  return !!rel && !rel.startsWith("..") && !path.isAbsolute(rel);
+}
+
+function contentTypeByExt(ext: string): string {
+  switch (ext) {
+    case ".css":
+      return "text/css; charset=utf-8";
+    case ".js":
+    case ".mjs":
+      return "text/javascript; charset=utf-8";
+    case ".json":
+      return "application/json; charset=utf-8";
+    case ".svg":
+      return "image/svg+xml";
+    case ".png":
+      return "image/png";
+    case ".jpg":
+    case ".jpeg":
+      return "image/jpeg";
+    case ".gif":
+      return "image/gif";
+    case ".webp":
+      return "image/webp";
+    case ".ico":
+      return "image/x-icon";
+    case ".pdf":
+      return "application/pdf";
+    case ".txt":
+      return "text/plain; charset=utf-8";
+    default:
+      return "application/octet-stream";
+  }
+}
+
 const CLIENT_JS = `
 const base = (window.__HOT_DOCS_BASE__ || "/");
 function withBase(p) {
   if (base === "/") return p;
-  if (p === "/") return base.endsWith("/") ? base.slice(0, -1) : base;
+  if (p === "/") return base;
   return (base.endsWith("/") ? base.slice(0, -1) : base) + p;
 }
 function stripBase(p) {
@@ -212,6 +308,14 @@ function stripBase(p) {
   if (p === b) return "/";
   if (p.startsWith(b + "/")) return p.slice(b.length) || "/";
   return p || "/";
+}
+function trimTrailingSlash(p) {
+  if (!p) return "/";
+  if (p === "/") return "/";
+  return p.endsWith("/") ? p.slice(0, -1) : p;
+}
+function normalizeRouteFromPathname(pathname) {
+  return trimTrailingSlash(stripBase(pathname));
 }
 
 const wsUrl = (() => {
@@ -238,8 +342,10 @@ async function loadPage(routePath) {
 function renderNavNode(node) {
   if (!node) return "";
   if (node.type === "page") {
-    const href = withBase(node.routePath);
-    const active = href === location.pathname ? " hd-active" : "";
+    const hrefBase = withBase(node.routePath);
+    const href = node.routePath === "/" ? hrefBase : hrefBase + "/";
+    const currentRoute = normalizeRouteFromPathname(location.pathname);
+    const active = node.routePath === currentRoute ? " hd-active" : "";
     return '<li class="hd-item' + active + '"><a href="' + href + '">' + escapeHtml(node.title) + "</a></li>";
   }
   const children = (node.children || []).map(renderNavNode).join("");
@@ -258,13 +364,13 @@ async function loadNav() {
 }
 
 await loadNav();
-await loadPage(stripBase(location.pathname));
+await loadPage(normalizeRouteFromPathname(location.pathname));
 
 const ws = new WebSocket(wsUrl);
 ws.addEventListener("message", async (ev) => {
   try {
     const msg = JSON.parse(ev.data);
-    const currentRoute = stripBase(location.pathname);
+    const currentRoute = normalizeRouteFromPathname(location.pathname);
     if (msg.type === "doc-changed" && msg.routePath === currentRoute) {
       await loadPage(currentRoute);
     }
@@ -280,114 +386,4 @@ ws.addEventListener("message", async (ev) => {
 });
 `;
 
-const THEME_CSS = `
-:root{
-  --hd-bg-0:#0b0f14;
-  --hd-bg-1:#0f1620;
-  --hd-bg-2:#121b26;
-  --hd-bg-3:#172234;
-  --hd-fg-0:#e6edf3;
-  --hd-fg-1:#a6b3c2;
-  --hd-fg-2:#7f8b99;
-  --hd-border-0:rgba(255,255,255,.08);
-  --hd-border-1:rgba(255,255,255,.12);
-  --hd-accent:#7c3aed;
-  --hd-accent-2:#22d3ee;
-  --hd-glow:rgba(124,58,237,.25);
-}
-*{box-sizing:border-box}
-html,body{height:100%}
-body{
-  margin:0;
-  background:radial-gradient(1200px 600px at 10% 0%, rgba(124,58,237,.12), transparent 55%),
-             radial-gradient(900px 500px at 100% 30%, rgba(34,211,238,.10), transparent 60%),
-             var(--hd-bg-0);
-  color:var(--hd-fg-0);
-  font:14px/1.65 ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
-}
-a{color:var(--hd-accent-2); text-decoration:none}
-a:hover{color:#7ef0ff}
-#hd-app{
-  display:grid;
-  grid-template-columns: 280px 1fr;
-  min-height:100vh;
-}
-#hd-sidebar{
-  padding:16px;
-  background:linear-gradient(180deg, rgba(18,27,38,.92), rgba(15,22,32,.92));
-  border-right:1px solid var(--hd-border-0);
-}
-#hd-main{
-  padding:16px 22px 60px;
-}
-#hd-header{
-  position:sticky;
-  top:0;
-  backdrop-filter: blur(10px);
-  background:rgba(11,15,20,.6);
-  border:1px solid var(--hd-border-0);
-  box-shadow:0 0 0 1px rgba(124,58,237,.06), 0 10px 30px rgba(0,0,0,.35);
-  border-radius:12px;
-  padding:10px 14px;
-  margin-bottom:16px;
-}
-#hd-brand{
-  font-weight:600;
-  letter-spacing:.2px;
-  color:var(--hd-fg-0);
-}
-#hd-content{
-  max-width: 980px;
-  background:rgba(18,27,38,.60);
-  border:1px solid var(--hd-border-0);
-  box-shadow:0 0 0 1px rgba(34,211,238,.05), 0 18px 60px rgba(0,0,0,.35);
-  border-radius:14px;
-  padding:22px 22px;
-}
-.hd-list{list-style:none; padding-left:0; margin:0}
-.hd-root{display:flex; flex-direction:column; gap:10px}
-.hd-dir-title{
-  font-size:12px;
-  color:var(--hd-fg-2);
-  text-transform:uppercase;
-  letter-spacing:.12em;
-  margin:8px 0 6px;
-}
-.hd-item a{
-  display:block;
-  padding:8px 10px;
-  border:1px solid transparent;
-  border-radius:10px;
-  color:var(--hd-fg-1);
-}
-.hd-item a:hover{
-  background:rgba(23,34,52,.65);
-  border-color:rgba(34,211,238,.18);
-  box-shadow:0 0 0 1px rgba(124,58,237,.10), 0 0 20px rgba(124,58,237,.10);
-  color:var(--hd-fg-0);
-}
-.hd-active a{
-  background:rgba(23,34,52,.85);
-  border-color:rgba(124,58,237,.35);
-  box-shadow:0 0 0 1px rgba(124,58,237,.18), 0 0 22px rgba(124,58,237,.18);
-  color:var(--hd-fg-0);
-}
-article h1,article h2,article h3{scroll-margin-top:90px}
-article h1{font-size:28px; margin:0 0 12px}
-article h2{font-size:20px; margin:28px 0 10px}
-article p{color:var(--hd-fg-1)}
-article code{
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-  background:rgba(0,0,0,.22);
-  border:1px solid rgba(255,255,255,.08);
-  padding:2px 6px;
-  border-radius:8px;
-}
-article pre{
-  background:rgba(0,0,0,.35);
-  border:1px solid rgba(255,255,255,.10);
-  border-radius:12px;
-  padding:14px;
-  overflow:auto;
-}
-`;
+// 默认主题由 core 提供（build/dev 保持一致）

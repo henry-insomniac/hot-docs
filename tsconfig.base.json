@@ -1,5 +1,11 @@
 {
   "compilerOptions": {
+    "baseUrl": ".",
+    "paths": {
+      "@hot-docs/core": ["packages/core/src/index.ts"],
+      "@hot-docs/dev-server": ["packages/dev-server/src/index.ts"],
+      "@hot-docs/cli": ["packages/cli/src/index.ts"]
+    },
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
