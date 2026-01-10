@@ -19,7 +19,11 @@ export type RenderMarkdownOptions = {
   rehypePlugins?: PluggableList;
 };
 
-export async function renderMarkdownToHtml(markdown: string, options: RenderMarkdownOptions = {}): Promise<string> {
+export type TocItem = { id: string; title: string; level: number };
+
+export type RenderMarkdownResult = { html: string; toc: TocItem[] };
+
+export async function renderMarkdownToPage(markdown: string, options: RenderMarkdownOptions = {}): Promise<RenderMarkdownResult> {
   const parsed = matter(markdown);
   const content = parsed.content;
 
@@ -29,6 +33,7 @@ export async function renderMarkdownToHtml(markdown: string, options: RenderMark
     .use(options.remarkPlugins ?? [])
     .use(remarkRehype, { allowDangerousHtml: false })
     .use(rehypeSlug)
+    .use(rehypeCollectToc)
     .use(rehypeAutolinkHeadings, { behavior: "wrap" })
     .use(options.rehypePlugins ?? []);
 
@@ -42,5 +47,53 @@ export async function renderMarkdownToHtml(markdown: string, options: RenderMark
 
   const file = await processor.process(content);
 
-  return String(file);
+  const toc = (file.data.hotDocsToc ?? []) as TocItem[];
+
+  return { html: String(file), toc };
+}
+
+export async function renderMarkdownToHtml(markdown: string, options: RenderMarkdownOptions = {}): Promise<string> {
+  const result = await renderMarkdownToPage(markdown, options);
+  return result.html;
+}
+
+function rehypeCollectToc(): any {
+  return (tree: any, file: any) => {
+    const items: TocItem[] = [];
+
+    walk(tree, (node: any) => {
+      if (!node || node.type !== "element") return;
+      const tag = String(node.tagName ?? "");
+      if (!/^h[1-6]$/i.test(tag)) return;
+
+      const level = Number(tag.slice(1));
+      if (!Number.isFinite(level) || level < 2 || level > 6) return;
+
+      const id = String(node.properties?.id ?? "").trim();
+      if (!id) return;
+
+      const title = toText(node).trim();
+      if (!title) return;
+
+      items.push({ id, title, level });
+    });
+
+    file.data.hotDocsToc = items;
+  };
+}
+
+function walk(node: any, visit: (n: any) => void): void {
+  visit(node);
+  const children: any[] | undefined = node && Array.isArray(node.children) ? node.children : undefined;
+  if (!children) return;
+  for (const child of children) walk(child, visit);
+}
+
+function toText(node: any): string {
+  if (!node) return "";
+  if (node.type === "text") return String(node.value ?? "");
+  if (node.type !== "element" && node.type !== "root") return "";
+  const children: any[] | undefined = Array.isArray(node.children) ? node.children : undefined;
+  if (!children) return "";
+  return children.map(toText).join("");
 }

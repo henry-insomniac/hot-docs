@@ -82,6 +82,15 @@
 - [x] 贡献文档：LICENSE、CONTRIBUTING、CODE_OF_CONDUCT、Issue/PR 模板
 - [x] 版本策略：SemVer + `apiVersion` 兼容策略与迁移指南模板（`docs/versioning.md`）
 
+## 执行进度（v1.0：契约稳定与可持续交付）
+
+> 最近更新：2026-01-10
+
+- [x] CI 门禁：GitHub Actions 运行 `pnpm typecheck` / `pnpm test` / `pnpm site:build`
+- [x] 配置契约稳定：`loadConfig` 增加 schema 校验与可读错误信息（含 collections/site/dev/theme/plugins）
+- [x] Docs TOC：生成与渲染（dev/build 行为一致）
+- [ ] 文档补齐：新增 v1.0 发布流程（版本号、变更日志、发包/Tag 规则）
+
 ## 0. 计划约束与假设
 
 ### 0.1 约束
