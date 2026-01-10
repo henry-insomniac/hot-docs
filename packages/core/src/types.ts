@@ -28,6 +28,7 @@ export type HotDocsConfig = {
     host?: string;
     open?: boolean;
     includeDrafts?: boolean;
+    strictPort?: boolean;
   };
 };
 

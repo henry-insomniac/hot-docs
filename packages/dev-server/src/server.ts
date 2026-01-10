@@ -27,6 +27,8 @@ import {
 type DevServerOptions = {
   configPath?: string;
   cwd?: string;
+  port?: number;
+  host?: string;
 };
 
 type WsEvent =
@@ -47,9 +49,10 @@ type WsEvent =
 export async function startDevServer(options: DevServerOptions = {}): Promise<void> {
   const cwd = options.cwd ?? process.cwd();
   const config = await loadConfig({ configPath: options.configPath, cwd });
-  const host = config.dev?.host ?? "127.0.0.1";
-  const port = config.dev?.port ?? 5173;
+  const host = options.host ?? config.dev?.host ?? "127.0.0.1";
+  const desiredPort = options.port ?? config.dev?.port ?? 5173;
   const includeDrafts = config.dev?.includeDrafts ?? true;
+  const strictPort = config.dev?.strictPort ?? false;
 
   let index = await scanContent(config, { includeDrafts });
   let navHash = computeNavHash(getDocsNav(index, config));
@@ -258,9 +261,55 @@ export async function startDevServer(options: DevServerOptions = {}): Promise<vo
     )
   );
 
-  await new Promise<void>((resolve) => server.listen(port, host, resolve));
+  const actualPort = await listenWithFallback(server, { host, port: desiredPort, strictPort });
+  if (actualPort !== desiredPort) {
+    // eslint-disable-next-line no-console
+    console.log(`Hot Docs dev server: 端口 ${desiredPort} 被占用，已自动切换到 ${actualPort}`);
+  }
   // eslint-disable-next-line no-console
-  console.log(`Hot Docs dev server: http://${host}:${port}`);
+  console.log(`Hot Docs dev server: http://${host}:${actualPort}${config.site.base}`);
+}
+
+async function listenWithFallback(server: http.Server, options: { host: string; port: number; strictPort: boolean }): Promise<number> {
+  const maxAttempts = options.strictPort ? 1 : 20;
+  let port = options.port;
+
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    try {
+      await new Promise<void>((resolve, reject) => {
+        const onError = (err: unknown) => {
+          server.off("listening", onListening);
+          reject(err);
+        };
+        const onListening = () => {
+          server.off("error", onError);
+          resolve();
+        };
+
+        server.once("error", onError);
+        server.once("listening", onListening);
+        server.listen(port, options.host);
+      });
+
+      const address = server.address();
+      if (address && typeof address === "object" && "port" in address) return address.port;
+      return port;
+    } catch (err) {
+      if (!options.strictPort && isAddrInUse(err)) {
+        port += 1;
+        continue;
+      }
+      throw err;
+    }
+  }
+
+  throw new Error(`无法启动 dev server：端口 ${options.port}~${port - 1} 均被占用`);
+}
+
+function isAddrInUse(err: unknown): boolean {
+  if (!err || typeof err !== "object") return false;
+  if (!("code" in err)) return false;
+  return (err as { code?: unknown }).code === "EADDRINUSE";
 }
 
 function computeNavHash(nav: unknown): string {
