@@ -6,6 +6,7 @@ import path from "node:path";
 import matter from "gray-matter";
 
 import type { CollectionConfig, ContentEntry, ContentIndex, HotDocsConfig, NavNode } from "../types.js";
+import { posixPath, toRoutePath } from "../utils/routes.js";
 
 type ScanOptions = {
   includeDrafts: boolean;
@@ -131,26 +132,6 @@ function deriveTitleFromPath(relativePath: string): string {
   return base === "index" ? "Home" : base;
 }
 
-function toRoutePath(routeBase: string, relativePath: string): string {
-  const posixRel = posixPath(relativePath);
-  const withoutExt = posixRel.replace(/\.(md|markdown)$/i, "");
-  const trimmed = withoutExt.endsWith("/index") ? withoutExt.slice(0, -"/index".length) : withoutExt;
-
-  const joined = joinUrlPath(routeBase, trimmed);
-  return joined === "" ? "/" : joined;
-}
-
-function joinUrlPath(base: string, suffix: string): string {
-  const baseNorm = base === "/" ? "" : base;
-  const suffixNorm = suffix ? `/${suffix}` : "";
-  const joined = `${baseNorm}${suffixNorm}`.replace(/\/+/g, "/");
-  return joined === "" ? "/" : joined;
-}
-
-function posixPath(p: string): string {
-  return p.split(path.sep).join("/");
-}
-
 function buildDocsNavTree(routeBase: string, entries: ContentEntry[]): NavNode {
   const root: NavNode = { type: "dir", title: "Docs", pathSegment: "", children: [] };
 
@@ -172,6 +153,17 @@ function buildDocsNavTree(routeBase: string, entries: ContentEntry[]): NavNode {
 }
 
 function insertNavNode(root: NavNode, segments: string[], entry: ContentEntry): void {
+  if (segments.length === 0) {
+    if (!root.children) root.children = [];
+    root.children.push({
+      type: "page",
+      title: entry.title,
+      pathSegment: "",
+      routePath: entry.routePath
+    });
+    return;
+  }
+
   let current = root;
   for (let i = 0; i < segments.length; i++) {
     const seg = segments[i]!;

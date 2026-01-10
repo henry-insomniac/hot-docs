@@ -6,7 +6,9 @@
     "node": ">=20"
   },
   "scripts": {
-    "dev": "pnpm --filter @hot-docs/cli dev",
+    "dev": "tsx --tsconfig packages/cli/tsconfig.json packages/cli/src/index.ts dev",
+    "site:build": "tsx --tsconfig packages/cli/tsconfig.json packages/cli/src/index.ts build",
+    "site:preview": "tsx --tsconfig packages/cli/tsconfig.json packages/cli/src/index.ts preview",
     "build": "pnpm -r build",
     "typecheck": "pnpm -r typecheck"
   },
