@@ -3,6 +3,13 @@
 > 本文档面向：项目维护者/核心开发者。它是“可执行”的计划：以可交付产物为中心，定义优先级、依赖关系、验收标准与风险控制。  
 > 配套文档：`docs/product-positioning.md`（方向与边界）、`docs/milestones.md`（版本里程碑）。
 
+## 执行进度（交付：合并与分支）
+
+> 最近更新：2026-01-10
+
+- [x] PR 已合并至 `main`：`feature/20260110-theme` → `main`（PR #5）
+- [x] 后续工作分支已创建：`feature/20260110-next`
+
 ## 执行进度（MVP：v0.1）
 
 > 最近更新：2026-01-10
@@ -25,6 +32,7 @@
 - [x] 增量更新：Markdown `change` 不再全量 rescan（仅更新单文件 entry，必要时重建 nav）
 - [x] 增量更新：`add/unlink` 正确更新 nav，并对当前页删除给出友好处理（跳转或提示）
 - [x] 监听稳定性：忽略 `.git/node_modules/dist` 等目录，避免噪声事件
+- [x] 端口冲突：dev 启动自动选择可用端口（支持 `dev.strictPort` 强制失败）
 
 ## 执行进度（v0.3：Theme as Plugin）
 

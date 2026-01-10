@@ -95,7 +95,7 @@ function printHelp(): void {
   console.log(`hot-docs
 
 用法:
-  hot-docs dev [--config <path>]
+  hot-docs dev [--config <path>] [--port <number>] [--host <host>]
   hot-docs build [--config <path>] [--outDir <dir>]
   hot-docs preview [--config <path>] [--outDir <dir>] [--port <number>] [--host <host>] [--open]
   hot-docs init [--force]
@@ -147,7 +147,7 @@ if (args.command === "init") {
     process.exit(1);
   }
 } else if (args.command === "dev") {
-  await startDevServer({ configPath: args.config, cwd });
+  await startDevServer({ configPath: args.config, cwd, host: args.host, port: args.port });
 } else if (args.command === "build") {
   const config = await loadConfig({ configPath: args.config, cwd });
   const result = await buildStaticSite(config, { cwd, outDir: args.outDir, includeDrafts: false, clean: true });

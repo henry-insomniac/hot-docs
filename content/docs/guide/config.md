@@ -62,3 +62,21 @@ order: 20
 
 更多说明见：[插件系统（v0.4）](../reference/plugins.md)
 
+## `dev`
+
+示例：
+
+```json
+{
+  "dev": {
+    "host": "127.0.0.1",
+    "port": 5173,
+    "includeDrafts": true,
+    "strictPort": false
+  }
+}
+```
+
+- `port` 默认 `5173`；若端口被占用且 `strictPort=false`（默认），会自动尝试下一个可用端口
+- `strictPort=true` 时端口占用会直接报错（便于 CI 或固定端口场景）
+- CLI 也支持临时覆盖：`hot-docs dev --port 5175 --host 127.0.0.1`
