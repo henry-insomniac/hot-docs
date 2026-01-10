@@ -24,7 +24,7 @@ export async function scanContent(config: HotDocsConfig, options: ScanOptions): 
     const entries: ContentEntry[] = [];
     for (const filePath of files) {
       const relativePath = path.relative(collectionRoot, filePath);
-      const entry = await readEntry({
+      const entry = await readContentEntry({
         filePath,
         collectionId,
         collection,
@@ -76,14 +76,14 @@ async function listMarkdownFiles(root: string): Promise<string[]> {
   return results.sort((a, b) => a.localeCompare(b));
 }
 
-type ReadEntryArgs = {
+export type ReadContentEntryArgs = {
   filePath: string;
   collectionId: string;
   collection: CollectionConfig;
   relativePath: string;
 };
 
-async function readEntry(args: ReadEntryArgs): Promise<ContentEntry> {
+export async function readContentEntry(args: ReadContentEntryArgs): Promise<ContentEntry> {
   const raw = await fs.readFile(args.filePath, "utf8");
   const stat = await fs.stat(args.filePath);
   const parsed = matter(raw);
@@ -132,7 +132,7 @@ function deriveTitleFromPath(relativePath: string): string {
   return base === "index" ? "Home" : base;
 }
 
-function buildDocsNavTree(routeBase: string, entries: ContentEntry[]): NavNode {
+export function buildDocsNavTree(routeBase: string, entries: ContentEntry[]): NavNode {
   const root: NavNode = { type: "dir", title: "Docs", pathSegment: "", children: [] };
 
   const sorted = [...entries].sort((a, b) => {

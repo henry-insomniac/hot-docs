@@ -16,6 +16,16 @@
 - [x] MVP 验收：`pnpm typecheck` 通过；`site.base` 子路径用例可访问
 - [x] 根脚本可用：`pnpm dev` / `pnpm site:build` / `pnpm site:preview`
 
+## 执行进度（v0.2：Dev DX + 增量更新）
+
+> 最近更新：2026-01-10
+
+- [x] Dev overlay：浏览器内可见错误面板（包含 message/stack/触发阶段）
+- [x] Dev overlay：展示最近一次更新耗时与索引规模（entries/nav hash）
+- [x] 增量更新：Markdown `change` 不再全量 rescan（仅更新单文件 entry，必要时重建 nav）
+- [x] 增量更新：`add/unlink` 正确更新 nav，并对当前页删除给出友好处理（跳转或提示）
+- [x] 监听稳定性：忽略 `.git/node_modules/dist` 等目录，避免噪声事件
+
 ## 0. 计划约束与假设
 
 ### 0.1 约束
