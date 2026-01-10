@@ -113,7 +113,20 @@ function mergeConfig(base: HotDocsConfig, override: Partial<HotDocsConfig>): Hot
     ...override,
     site: { ...base.site, ...(override.site ?? {}) },
     collections: { ...base.collections, ...(override.collections ?? {}) },
+    theme: mergeTheme(base.theme, override.theme),
     dev: { ...base.dev, ...(override.dev ?? {}) }
+  };
+}
+
+function mergeTheme(
+  baseTheme: HotDocsConfig["theme"] | undefined,
+  overrideTheme: HotDocsConfig["theme"] | undefined
+): HotDocsConfig["theme"] | undefined {
+  if (!baseTheme && !overrideTheme) return undefined;
+  return {
+    ...(baseTheme ?? {}),
+    ...(overrideTheme ?? {}),
+    tokens: { ...(baseTheme?.tokens ?? {}), ...(overrideTheme?.tokens ?? {}) }
   };
 }
 

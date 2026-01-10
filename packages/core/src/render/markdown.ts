@@ -1,5 +1,5 @@
 import matter from "gray-matter";
-import { unified } from "unified";
+import { unified, type PluggableList } from "unified";
 import remarkParse from "remark-parse";
 import remarkGfm from "remark-gfm";
 import remarkRehype from "remark-rehype";
@@ -15,6 +15,8 @@ export type RenderMarkdownOptions = {
   config?: HotDocsConfig;
   entry?: ContentEntry;
   filePath?: string;
+  remarkPlugins?: PluggableList;
+  rehypePlugins?: PluggableList;
 };
 
 export async function renderMarkdownToHtml(markdown: string, options: RenderMarkdownOptions = {}): Promise<string> {
@@ -24,9 +26,11 @@ export async function renderMarkdownToHtml(markdown: string, options: RenderMark
   const processor = unified()
     .use(remarkParse)
     .use(remarkGfm)
+    .use(options.remarkPlugins ?? [])
     .use(remarkRehype, { allowDangerousHtml: false })
     .use(rehypeSlug)
-    .use(rehypeAutolinkHeadings, { behavior: "wrap" });
+    .use(rehypeAutolinkHeadings, { behavior: "wrap" })
+    .use(options.rehypePlugins ?? []);
 
   if (options.config && options.entry && options.filePath) {
     processor.use(rehypeRewriteUrls, {

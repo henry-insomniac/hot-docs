@@ -18,6 +18,12 @@ pnpm site:build
 pnpm site:preview
 ```
 
+## 测试
+
+```bash
+pnpm test
+```
+
 ## 文档
 
 - `docs/requirements.md`

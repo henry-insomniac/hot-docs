@@ -1,8 +1,10 @@
 ---
-title: About
+title: 关于
 ---
 
-# About
+# 关于
 
-这是一个独立页示例。
+这是一个 pages 集合的示例页面，用于验证 pages 路由与渲染。
 
+- [返回首页](/)
+- [Blog 列表](/blog/)
