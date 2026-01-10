@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="840" height="220" viewBox="0 0 840 220">
+  <defs>
+    <linearGradient id="g" x1="0" x2="1" y1="0" y2="1">
+      <stop offset="0" stop-color="#7c3aed" stop-opacity="0.35" />
+      <stop offset="1" stop-color="#ff4d4f" stop-opacity="0.18" />
+    </linearGradient>
+    <filter id="shadow" x="-30%" y="-30%" width="160%" height="160%">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="rgba(0,0,0,0.35)" />
+    </filter>
+  </defs>
+
+  <rect x="0" y="0" width="840" height="220" fill="url(#g)" />
+
+  <g filter="url(#shadow)">
+    <rect x="40" y="60" width="220" height="100" rx="14" fill="rgba(15,22,32,0.78)" stroke="rgba(255,255,255,0.14)" />
+    <rect x="310" y="60" width="220" height="100" rx="14" fill="rgba(15,22,32,0.78)" stroke="rgba(255,255,255,0.14)" />
+    <rect x="580" y="60" width="220" height="100" rx="14" fill="rgba(15,22,32,0.78)" stroke="rgba(255,255,255,0.14)" />
+
+    <text x="150" y="105" font-size="16" text-anchor="middle" fill="rgba(230,237,243,0.92)" font-family="ui-sans-serif, system-ui, -apple-system">
+      Markdown
+    </text>
+    <text x="420" y="105" font-size="16" text-anchor="middle" fill="rgba(230,237,243,0.92)" font-family="ui-sans-serif, system-ui, -apple-system">
+      Hot Docs
+    </text>
+    <text x="690" y="105" font-size="16" text-anchor="middle" fill="rgba(230,237,243,0.92)" font-family="ui-sans-serif, system-ui, -apple-system">
+      dist/
+    </text>
+
+    <text x="150" y="132" font-size="12" text-anchor="middle" fill="rgba(230,237,243,0.70)" font-family="ui-sans-serif, system-ui, -apple-system">
+      content/docs
+    </text>
+    <text x="420" y="132" font-size="12" text-anchor="middle" fill="rgba(230,237,243,0.70)" font-family="ui-sans-serif, system-ui, -apple-system">
+      build/render
+    </text>
+    <text x="690" y="132" font-size="12" text-anchor="middle" fill="rgba(230,237,243,0.70)" font-family="ui-sans-serif, system-ui, -apple-system">
+      静态产物
+    </text>
+  </g>
+
+  <path d="M270 110 L300 110" stroke="rgba(230,237,243,0.7)" stroke-width="3" />
+  <path d="M540 110 L570 110" stroke="rgba(230,237,243,0.7)" stroke-width="3" />
+  <polygon points="300,110 290,104 290,116" fill="rgba(230,237,243,0.7)" />
+  <polygon points="570,110 560,104 560,116" fill="rgba(230,237,243,0.7)" />
+
+  <text x="420" y="198" font-size="12" text-anchor="middle" fill="rgba(230,237,243,0.70)" font-family="ui-sans-serif, system-ui, -apple-system">
+    相对图片/附件在 dev 与 build 中保持一致
+  </text>
+</svg>
+

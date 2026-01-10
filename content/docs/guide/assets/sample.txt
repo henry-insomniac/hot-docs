@@ -1,0 +1,5 @@
+Hot Docs 附件示例文件
+
+- 这个文件会在 dev 中从 contentDir 直接提供
+- 在 build 后会被拷贝到 dist/ 对应路径
+

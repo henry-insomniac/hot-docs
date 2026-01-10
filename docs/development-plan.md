@@ -26,6 +26,54 @@
 - [x] 增量更新：`add/unlink` 正确更新 nav，并对当前页删除给出友好处理（跳转或提示）
 - [x] 监听稳定性：忽略 `.git/node_modules/dist` 等目录，避免噪声事件
 
+## 执行进度（v0.3：Theme as Plugin）
+
+> 最近更新：2026-01-10
+
+- [x] Config：支持 `theme`（`name` + `tokens`）字段，保持向后兼容
+- [x] Theme loader：从主题包 `package.json#hotDocs` 读取 `style` 并加载 CSS（校验 `type=theme/apiVersion=1`）
+- [x] Token 合并：默认主题 → theme.css → 用户 `tokens` 覆盖（生成 `:root{--hd-...}`）
+- [x] Dev/Build 统一：`/__hot_docs__/theme.css` 与 `dist/assets/theme.css` 由同一 loader 产出
+- [x] 最小示例：提供一个可用的示例主题包（workspace 包）用于验证加载逻辑
+
+## 执行进度（v0.4：Plugin Host）
+
+> 最近更新：2026-01-10
+
+- [x] Config：支持 `plugins`（包插件/本地插件 + options），保持向后兼容
+- [x] Plugin loader：discovery/validate/load（读取 `package.json#hotDocs`，校验 `type=plugin/apiVersion=1/entry`）
+- [x] Pipeline：Markdown 渲染可注入 remark/rehype 扩展（最小可用）
+- [x] Build hooks：插件可在 build 阶段生成额外产物（如 sitemap/feed）
+- [x] 参考插件：提供 `@hot-docs/plugin-sitemap` 与 `@hot-docs/plugin-feed`
+- [x] 诊断与归因：输出插件链顺序；报错包含插件名与阶段
+
+## 执行进度（Demo：示例内容）
+
+> 最近更新：2026-01-10
+
+- [x] 增加多级 docs 页面（guide/reference/examples）用于验证导航与渲染
+- [x] 增加图片/附件示例（相对路径）用于验证 dev/build 一致性
+- [x] 增加一篇非 draft blog 文章用于验证 build 侧 feed/sitemap 产物
+
+## 执行进度（v0.5：Blog 信息架构）
+
+> 最近更新：2026-01-10
+
+- [x] Blog 列表页：`/blog/`（含分页 `/blog/page/<n>/`）
+- [x] Blog taxonomy：tags/categories/archive 页面生成与可访问
+- [x] Draft 策略：dev 可见、build 默认排除（含 feed/sitemap）
+- [x] Dev/Build 一致：上述路由在 dev 与 build/preview 行为一致
+
+## 执行进度（v0.6：工程化与开源治理）
+
+> 最近更新：2026-01-10
+
+- [x] CLI：新增 `init`（生成最小站点骨架），新增 `new doc/post`（模板生成）
+- [x] 回归测试：引入 Node 内置 `node:test`，覆盖 base/path/route、nav、draft 过滤、build 输出路径
+- [x] ADR：记录关键决策（静态产物策略、theme/plugin 契约）
+- [x] 贡献文档：LICENSE、CONTRIBUTING、CODE_OF_CONDUCT、Issue/PR 模板
+- [x] 版本策略：SemVer + `apiVersion` 兼容策略与迁移指南模板（`docs/versioning.md`）
+
 ## 0. 计划约束与假设
 
 ### 0.1 约束

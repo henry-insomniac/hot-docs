@@ -6,6 +6,11 @@ export type CollectionConfig = {
   type: CollectionType;
 };
 
+export type HotDocsPluginRef =
+  | string
+  | { name: string; options?: Record<string, unknown> }
+  | { path: string; options?: Record<string, unknown> };
+
 export type HotDocsConfig = {
   contentDir: string;
   collections: Record<string, CollectionConfig>;
@@ -13,6 +18,11 @@ export type HotDocsConfig = {
     title: string;
     base: string;
   };
+  theme?: {
+    name?: string;
+    tokens?: Record<string, string>;
+  };
+  plugins?: HotDocsPluginRef[];
   dev?: {
     port?: number;
     host?: string;
@@ -59,4 +69,3 @@ export type RenderedPage = {
   html: string;
   hash: string;
 };
-

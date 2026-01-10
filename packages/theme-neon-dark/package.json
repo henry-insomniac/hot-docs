@@ -1,0 +1,11 @@
+{
+  "name": "@hot-docs/theme-neon-dark",
+  "version": "0.0.1",
+  "private": true,
+  "hotDocs": {
+    "type": "theme",
+    "apiVersion": "1",
+    "style": "./theme.css"
+  }
+}
+

@@ -8,6 +8,15 @@ importers:
 
   .:
     devDependencies:
+      '@hot-docs/plugin-feed':
+        specifier: workspace:*
+        version: link:packages/plugin-feed
+      '@hot-docs/plugin-sitemap':
+        specifier: workspace:*
+        version: link:packages/plugin-sitemap
+      '@hot-docs/theme-neon-dark':
+        specifier: workspace:*
+        version: link:packages/theme-neon-dark
       '@types/node':
         specifier: ^22.10.0
         version: 22.19.5
@@ -75,6 +84,20 @@ importers:
       '@types/ws':
         specifier: ^8.18.0
         version: 8.18.1
+
+  packages/plugin-feed:
+    dependencies:
+      '@hot-docs/core':
+        specifier: workspace:*
+        version: link:../core
+
+  packages/plugin-sitemap:
+    dependencies:
+      '@hot-docs/core':
+        specifier: workspace:*
+        version: link:../core
+
+  packages/theme-neon-dark: {}
 
 packages:
 

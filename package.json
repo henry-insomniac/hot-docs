@@ -7,13 +7,19 @@
   },
   "scripts": {
     "dev": "tsx --tsconfig packages/cli/tsconfig.json packages/cli/src/index.ts dev",
+    "site:init": "tsx --tsconfig packages/cli/tsconfig.json packages/cli/src/index.ts init",
+    "site:new": "tsx --tsconfig packages/cli/tsconfig.json packages/cli/src/index.ts new",
     "site:build": "tsx --tsconfig packages/cli/tsconfig.json packages/cli/src/index.ts build",
     "site:preview": "tsx --tsconfig packages/cli/tsconfig.json packages/cli/src/index.ts preview",
     "build": "pnpm -r build",
-    "typecheck": "pnpm -r typecheck"
+    "typecheck": "pnpm -r typecheck",
+    "test": "node --import tsx --test tests/*.test.mjs"
   },
   "devDependencies": {
     "@types/node": "^22.10.0",
+    "@hot-docs/theme-neon-dark": "workspace:*",
+    "@hot-docs/plugin-sitemap": "workspace:*",
+    "@hot-docs/plugin-feed": "workspace:*",
     "esbuild": "^0.25.0",
     "tsx": "^4.20.0",
     "typescript": "^5.7.0"

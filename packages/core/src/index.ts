@@ -6,3 +6,7 @@ export * from "./utils/base.js";
 export * from "./utils/routes.js";
 export * from "./build/build.js";
 export * from "./theme/default-theme.js";
+export * from "./theme/load-theme.js";
+export * from "./plugins/types.js";
+export * from "./plugins/load-plugins.js";
+export * from "./blog/virtual-pages.js";
