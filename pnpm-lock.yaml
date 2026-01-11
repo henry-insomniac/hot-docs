@@ -11,6 +11,9 @@ importers:
       '@hot-docs/plugin-feed':
         specifier: workspace:*
         version: link:packages/plugin-feed
+      '@hot-docs/plugin-search':
+        specifier: workspace:*
+        version: link:packages/plugin-search
       '@hot-docs/plugin-sitemap':
         specifier: workspace:*
         version: link:packages/plugin-sitemap
@@ -90,6 +93,15 @@ importers:
       '@hot-docs/core':
         specifier: workspace:*
         version: link:../core
+
+  packages/plugin-search:
+    dependencies:
+      '@hot-docs/core':
+        specifier: workspace:*
+        version: link:../core
+      gray-matter:
+        specifier: ^4.0.3
+        version: 4.0.3
 
   packages/plugin-sitemap:
     dependencies:

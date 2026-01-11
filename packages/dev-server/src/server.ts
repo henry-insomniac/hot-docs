@@ -58,12 +58,15 @@ export async function startDevServer(options: DevServerOptions = {}): Promise<vo
   let navHash = computeNavHash(getDocsNav(index, config));
   const themeCss = await loadThemeCss(config, { cwd });
   let blogVirtualByRoute = buildBlogVirtualPageMap(config, index);
+  let pluginVirtualByRoute = new Map<string, { routePath: string; title: string; html: string; hash: string }>();
   let markdownExtensions = { remarkPlugins: [] as any[], rehypePlugins: [] as any[] };
+  let plugins: HotDocsPlugin[] = [];
   let pluginLoadError: Error | undefined;
 
   try {
-    const plugins = await loadPlugins(config, { cwd });
+    plugins = await loadPlugins(config, { cwd });
     markdownExtensions = collectMarkdownExtensions(plugins);
+    pluginVirtualByRoute = await buildPluginVirtualPageMap({ plugins, config, index, blogVirtualPages: blogVirtualByRoute, cwd });
     if (plugins.length) {
       // eslint-disable-next-line no-console
       console.log(`Hot Docs plugins: ${plugins.map((p) => p.name).join(", ")}`);
@@ -139,6 +142,20 @@ export async function startDevServer(options: DevServerOptions = {}): Promise<vo
           if (virtual) {
             res.writeHead(200, { "content-type": "application/json; charset=utf-8" });
             res.end(JSON.stringify({ routePath: virtual.routePath, title: virtual.title, html: virtual.html, toc: [], hash: virtual.hash }));
+            return;
+          }
+          const pluginVirtual = pluginVirtualByRoute.get(route);
+          if (pluginVirtual) {
+            res.writeHead(200, { "content-type": "application/json; charset=utf-8" });
+            res.end(
+              JSON.stringify({
+                routePath: pluginVirtual.routePath,
+                title: pluginVirtual.title,
+                html: pluginVirtual.html,
+                toc: [],
+                hash: pluginVirtual.hash
+              })
+            );
             return;
           }
 
@@ -221,12 +238,16 @@ export async function startDevServer(options: DevServerOptions = {}): Promise<vo
       handleFileUpsert({
         config,
         includeDrafts,
+        cwd,
+        plugins,
         filePath,
         index,
         blogVirtualPages: blogVirtualByRoute,
+        pluginVirtualPages: pluginVirtualByRoute,
         onIndex: (v) => (index = v),
         onNavHash: (v) => (navHash = v),
         onBlogVirtualPages: (v) => (blogVirtualByRoute = v),
+        onPluginVirtualPages: (v) => (pluginVirtualByRoute = v),
         broadcast
       })
     )
@@ -236,12 +257,16 @@ export async function startDevServer(options: DevServerOptions = {}): Promise<vo
       handleFileUpsert({
         config,
         includeDrafts,
+        cwd,
+        plugins,
         filePath,
         index,
         blogVirtualPages: blogVirtualByRoute,
+        pluginVirtualPages: pluginVirtualByRoute,
         onIndex: (v) => (index = v),
         onNavHash: (v) => (navHash = v),
         onBlogVirtualPages: (v) => (blogVirtualByRoute = v),
+        onPluginVirtualPages: (v) => (pluginVirtualByRoute = v),
         broadcast
       })
     )
@@ -250,12 +275,16 @@ export async function startDevServer(options: DevServerOptions = {}): Promise<vo
     enqueue({ kind: "unlink", filePath }, () =>
       handleFileRemove({
         config,
+        cwd,
+        plugins,
         filePath,
         index,
         blogVirtualPages: blogVirtualByRoute,
+        pluginVirtualPages: pluginVirtualByRoute,
         onIndex: (v) => (index = v),
         onNavHash: (v) => (navHash = v),
         onBlogVirtualPages: (v) => (blogVirtualByRoute = v),
+        onPluginVirtualPages: (v) => (pluginVirtualByRoute = v),
         broadcast
       })
     )
@@ -324,6 +353,78 @@ function buildBlogVirtualPageMap(config: HotDocsConfig, index: ContentIndex): Ma
 }
 
 function diffBlogVirtualPages(
+  prev: Map<string, { routePath: string; title: string; html: string; hash: string }>,
+  next: Map<string, { routePath: string; title: string; html: string; hash: string }>
+): { removed: string[]; changed: Array<{ routePath: string; hash: string }> } {
+  const removed: string[] = [];
+  const changed: Array<{ routePath: string; hash: string }> = [];
+
+  for (const route of prev.keys()) {
+    if (!next.has(route)) removed.push(route);
+  }
+  for (const [route, page] of next.entries()) {
+    const prevPage = prev.get(route);
+    if (!prevPage || prevPage.hash !== page.hash) changed.push({ routePath: route, hash: page.hash });
+  }
+
+  return { removed, changed };
+}
+
+async function buildPluginVirtualPageMap(args: {
+  plugins: HotDocsPlugin[];
+  config: HotDocsConfig;
+  index: ContentIndex;
+  blogVirtualPages: Map<string, { routePath: string; title: string; html: string; hash: string }>;
+  cwd: string;
+}): Promise<Map<string, { routePath: string; title: string; html: string; hash: string }>> {
+  const pages: Array<{ routePath: string; title: string; html: string; hash: string }> = [];
+  const seen = new Map<string, string>();
+
+  for (const plugin of args.plugins) {
+    const fn = plugin.routes?.pages;
+    if (!fn) continue;
+
+    let res: any;
+    try {
+      res = await fn({ cwd: args.cwd, config: args.config, index: args.index });
+    } catch (err) {
+      const e = err instanceof Error ? err : new Error(String(err));
+      throw new Error(`插件 ${plugin.name} 在 routes 阶段执行失败：${e.message}`, { cause: e });
+    }
+
+    if (!Array.isArray(res)) continue;
+    for (const p of res) {
+      if (!p || typeof p !== "object") continue;
+      if (typeof p.routePath !== "string" || !p.routePath.trim()) continue;
+      if (typeof p.title !== "string") continue;
+      if (typeof p.html !== "string") continue;
+
+      const routePath = normalizeRoutePath(p.routePath);
+
+      if (args.index.entriesByRoute.has(routePath)) continue; // allow user override with real markdown
+      if (args.blogVirtualPages.has(routePath)) {
+        throw new Error(`插件虚拟页面路由被 core 占用：${routePath}（plugin: ${plugin.name}）`);
+      }
+
+      const prev = seen.get(routePath);
+      if (prev) {
+        throw new Error(`插件虚拟页面路由冲突：${routePath}（${prev} vs ${plugin.name}）`);
+      }
+      seen.set(routePath, plugin.name);
+
+      const hash =
+        typeof (p as any).hash === "string" && String((p as any).hash).trim()
+          ? String((p as any).hash).trim()
+          : crypto.createHash("sha1").update(JSON.stringify({ routePath, title: p.title, html: p.html })).digest("hex").slice(0, 12);
+
+      pages.push({ routePath, title: p.title, html: p.html, hash });
+    }
+  }
+
+  return new Map(pages.map((p) => [trimTrailingSlash(p.routePath), p]));
+}
+
+function diffVirtualPages(
   prev: Map<string, { routePath: string; title: string; html: string; hash: string }>,
   next: Map<string, { routePath: string; title: string; html: string; hash: string }>
 ): { removed: string[]; changed: Array<{ routePath: string; hash: string }> } {
@@ -554,6 +655,22 @@ async function loadPage(routePath) {
   document.title = data.title;
   contentEl.innerHTML = data.html;
   renderToc(data.toc || []);
+  executeScripts(contentEl);
+}
+
+function executeScripts(root) {
+  if (!root) return;
+  const scripts = root.querySelectorAll("script");
+  for (const s of scripts) {
+    const type = (s.getAttribute("type") || "").trim();
+    if (type && type !== "module" && type !== "text/javascript" && type !== "application/javascript") continue;
+    const next = document.createElement("script");
+    if (type) next.setAttribute("type", type);
+    const src = s.getAttribute("src");
+    if (src) next.setAttribute("src", src);
+    next.textContent = s.textContent || "";
+    s.replaceWith(next);
+  }
 }
 
 function renderToc(items) {
@@ -751,12 +868,16 @@ type OverlayLastEvent = { filePath: string; routePath?: string; action?: "update
 type UpsertArgs = {
   config: HotDocsConfig;
   includeDrafts: boolean;
+  cwd: string;
+  plugins: HotDocsPlugin[];
   filePath: string;
   index: ContentIndex;
   blogVirtualPages: Map<string, { routePath: string; title: string; html: string; hash: string }>;
+  pluginVirtualPages: Map<string, { routePath: string; title: string; html: string; hash: string }>;
   onIndex: (next: ContentIndex) => void;
   onNavHash: (next: string) => void;
   onBlogVirtualPages: (next: Map<string, { routePath: string; title: string; html: string; hash: string }>) => void;
+  onPluginVirtualPages: (next: Map<string, { routePath: string; title: string; html: string; hash: string }>) => void;
   broadcast: (event: WsEvent) => void;
 };
 
@@ -775,27 +896,47 @@ async function handleFileUpsert(args: UpsertArgs): Promise<OverlayLastEvent | un
     relativePath: resolved.relativePath
   });
 
-  if (!args.includeDrafts && entry.draft) {
-    if (previous) {
-      removeEntry(args.index, previous);
-      const navChanged = maybeRebuildDocsNav(args.index, args.config, resolved.collectionId, true);
-      if (navChanged) {
-        const nextHash = computeNavHash(getDocsNav(args.index, args.config));
-        args.onNavHash(nextHash);
-        args.broadcast({ type: "nav-updated", hash: nextHash });
-      }
-      if (resolved.collection.type === "blog") {
-        const next = buildBlogVirtualPageMap(args.config, args.index);
-        const diff = diffBlogVirtualPages(args.blogVirtualPages, next);
-        args.onBlogVirtualPages(next);
-        for (const routePath of diff.removed) args.broadcast({ type: "doc-removed", routePath });
-        for (const ev of diff.changed) args.broadcast({ type: "doc-changed", routePath: ev.routePath, hash: ev.hash });
-      }
-      args.broadcast({ type: "doc-removed", routePath: previous.routePath });
-      return { filePath: resolved.displayPath, routePath: previous.routePath, action: "removed" };
-    }
-    return;
-  }
+	  if (!args.includeDrafts && entry.draft) {
+	    if (previous) {
+	      removeEntry(args.index, previous);
+	      const navChanged = maybeRebuildDocsNav(args.index, args.config, resolved.collectionId, true);
+	      if (navChanged) {
+	        const nextHash = computeNavHash(getDocsNav(args.index, args.config));
+	        args.onNavHash(nextHash);
+	        args.broadcast({ type: "nav-updated", hash: nextHash });
+	      }
+	      let blogPages = args.blogVirtualPages;
+	      if (resolved.collection.type === "blog") {
+	        const next = buildBlogVirtualPageMap(args.config, args.index);
+	        const diff = diffBlogVirtualPages(args.blogVirtualPages, next);
+	        blogPages = next;
+	        args.onBlogVirtualPages(next);
+	        for (const routePath of diff.removed) args.broadcast({ type: "doc-removed", routePath });
+	        for (const ev of diff.changed) args.broadcast({ type: "doc-changed", routePath: ev.routePath, hash: ev.hash });
+	      }
+	      if (args.plugins.length) {
+	        try {
+	          const next = await buildPluginVirtualPageMap({
+	            plugins: args.plugins,
+	            config: args.config,
+	            index: args.index,
+	            blogVirtualPages: blogPages,
+	            cwd: args.cwd
+	          });
+	          const diff = diffVirtualPages(args.pluginVirtualPages, next);
+	          args.onPluginVirtualPages(next);
+	          for (const routePath of diff.removed) args.broadcast({ type: "doc-removed", routePath });
+	          for (const ev of diff.changed) args.broadcast({ type: "doc-changed", routePath: ev.routePath, hash: ev.hash });
+	        } catch (err) {
+	          const e = err instanceof Error ? err : new Error(String(err));
+	          args.broadcast({ type: "overlay-error", message: e.message, stack: e.stack, phase: "plugin" });
+	        }
+	      }
+	      args.broadcast({ type: "doc-removed", routePath: previous.routePath });
+	      return { filePath: resolved.displayPath, routePath: previous.routePath, action: "removed" };
+	    }
+	    return;
+	  }
 
   upsertEntry(args.index, entry, previous);
 
@@ -807,26 +948,44 @@ async function handleFileUpsert(args: UpsertArgs): Promise<OverlayLastEvent | un
     args.broadcast({ type: "nav-updated", hash: nextHash });
   }
 
-  args.onIndex(args.index);
-  if (resolved.collection.type === "blog") {
-    const next = buildBlogVirtualPageMap(args.config, args.index);
-    const diff = diffBlogVirtualPages(args.blogVirtualPages, next);
-    args.onBlogVirtualPages(next);
-    for (const routePath of diff.removed) args.broadcast({ type: "doc-removed", routePath });
-    for (const ev of diff.changed) args.broadcast({ type: "doc-changed", routePath: ev.routePath, hash: ev.hash });
-  }
-  args.broadcast({ type: "doc-changed", routePath: entry.routePath, hash: entry.hash });
-  return { filePath: resolved.displayPath, routePath: entry.routePath, action: "updated" };
-}
+	  args.onIndex(args.index);
+	  let blogPages = args.blogVirtualPages;
+	  if (resolved.collection.type === "blog") {
+	    const next = buildBlogVirtualPageMap(args.config, args.index);
+	    const diff = diffBlogVirtualPages(args.blogVirtualPages, next);
+	    blogPages = next;
+	    args.onBlogVirtualPages(next);
+	    for (const routePath of diff.removed) args.broadcast({ type: "doc-removed", routePath });
+	    for (const ev of diff.changed) args.broadcast({ type: "doc-changed", routePath: ev.routePath, hash: ev.hash });
+	  }
+	  if (args.plugins.length) {
+	    try {
+	      const next = await buildPluginVirtualPageMap({ plugins: args.plugins, config: args.config, index: args.index, blogVirtualPages: blogPages, cwd: args.cwd });
+	      const diff = diffVirtualPages(args.pluginVirtualPages, next);
+	      args.onPluginVirtualPages(next);
+	      for (const routePath of diff.removed) args.broadcast({ type: "doc-removed", routePath });
+	      for (const ev of diff.changed) args.broadcast({ type: "doc-changed", routePath: ev.routePath, hash: ev.hash });
+	    } catch (err) {
+	      const e = err instanceof Error ? err : new Error(String(err));
+	      args.broadcast({ type: "overlay-error", message: e.message, stack: e.stack, phase: "plugin" });
+	    }
+	  }
+	  args.broadcast({ type: "doc-changed", routePath: entry.routePath, hash: entry.hash });
+	  return { filePath: resolved.displayPath, routePath: entry.routePath, action: "updated" };
+	}
 
 type RemoveArgs = {
   config: HotDocsConfig;
+  cwd: string;
+  plugins: HotDocsPlugin[];
   filePath: string;
   index: ContentIndex;
   blogVirtualPages: Map<string, { routePath: string; title: string; html: string; hash: string }>;
+  pluginVirtualPages: Map<string, { routePath: string; title: string; html: string; hash: string }>;
   onIndex: (next: ContentIndex) => void;
   onNavHash: (next: string) => void;
   onBlogVirtualPages: (next: Map<string, { routePath: string; title: string; html: string; hash: string }>) => void;
+  onPluginVirtualPages: (next: Map<string, { routePath: string; title: string; html: string; hash: string }>) => void;
   broadcast: (event: WsEvent) => void;
 };
 
@@ -848,17 +1007,31 @@ async function handleFileRemove(args: RemoveArgs): Promise<OverlayLastEvent | un
     args.broadcast({ type: "nav-updated", hash: nextHash });
   }
 
-  args.onIndex(args.index);
-  if (resolved.collection.type === "blog") {
-    const next = buildBlogVirtualPageMap(args.config, args.index);
-    const diff = diffBlogVirtualPages(args.blogVirtualPages, next);
-    args.onBlogVirtualPages(next);
-    for (const routePath of diff.removed) args.broadcast({ type: "doc-removed", routePath });
-    for (const ev of diff.changed) args.broadcast({ type: "doc-changed", routePath: ev.routePath, hash: ev.hash });
-  }
-  args.broadcast({ type: "doc-removed", routePath: previous.routePath });
-  return { filePath: resolved.displayPath, routePath: previous.routePath, action: "removed" };
-}
+	  args.onIndex(args.index);
+	  let blogPages = args.blogVirtualPages;
+	  if (resolved.collection.type === "blog") {
+	    const next = buildBlogVirtualPageMap(args.config, args.index);
+	    const diff = diffBlogVirtualPages(args.blogVirtualPages, next);
+	    blogPages = next;
+	    args.onBlogVirtualPages(next);
+	    for (const routePath of diff.removed) args.broadcast({ type: "doc-removed", routePath });
+	    for (const ev of diff.changed) args.broadcast({ type: "doc-changed", routePath: ev.routePath, hash: ev.hash });
+	  }
+	  if (args.plugins.length) {
+	    try {
+	      const next = await buildPluginVirtualPageMap({ plugins: args.plugins, config: args.config, index: args.index, blogVirtualPages: blogPages, cwd: args.cwd });
+	      const diff = diffVirtualPages(args.pluginVirtualPages, next);
+	      args.onPluginVirtualPages(next);
+	      for (const routePath of diff.removed) args.broadcast({ type: "doc-removed", routePath });
+	      for (const ev of diff.changed) args.broadcast({ type: "doc-changed", routePath: ev.routePath, hash: ev.hash });
+	    } catch (err) {
+	      const e = err instanceof Error ? err : new Error(String(err));
+	      args.broadcast({ type: "overlay-error", message: e.message, stack: e.stack, phase: "plugin" });
+	    }
+	  }
+	  args.broadcast({ type: "doc-removed", routePath: previous.routePath });
+	  return { filePath: resolved.displayPath, routePath: previous.routePath, action: "removed" };
+	}
 
 function isMarkdownFile(filePath: string): boolean {
   const ext = path.extname(filePath).toLowerCase();

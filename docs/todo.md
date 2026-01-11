@@ -29,10 +29,12 @@
 ## M3：插件系统（Ecosystem）
 - [x] 插件 loader：discovery/validate/load（包插件 + 本地插件）
 - [x] 最小 pipeline：render 扩展（remark/rehype）+ build hooks
+- [x] routes：插件可提供虚拟页面（`routes.pages`，dev/build 一致）
 - [ ] capabilities 与分阶段 pipeline（scan/index/render/routes/client/dev/deploy）
 - [ ] 插件诊断：耗时、错误归因、顺序可视化（进一步完善）
 - [x] 示例插件：feed / sitemap
-- [ ] 示例插件：search / deploy（headers/redirects）
+- [x] 示例插件：search（`@hot-docs/plugin-search`）
+- [ ] 示例插件：deploy（headers/redirects）
 
 ## M4：Blog 信息架构完善
 - [x] 列表页分页
