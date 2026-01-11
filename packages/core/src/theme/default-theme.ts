@@ -159,4 +159,31 @@ article pre{
   padding:14px;
   overflow:auto;
 }
+article input[type="search"], article input[type="text"]{
+  width:min(560px, 100%);
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid var(--hd-border-1);
+  background:rgba(11,15,20,.45);
+  color:var(--hd-fg-0);
+  outline:none;
+}
+article input[type="search"]:focus, article input[type="text"]:focus{
+  border-color:rgba(34,211,238,.25);
+  box-shadow:0 0 0 3px rgba(34,211,238,.10);
+}
+.hd-search-results{list-style:none; padding-left:0; margin:12px 0 0; display:flex; flex-direction:column; gap:10px}
+.hd-search-item a{
+  display:block;
+  padding:10px 12px;
+  border-radius:12px;
+  border:1px solid rgba(255,255,255,.10);
+  background:rgba(23,34,52,.35);
+  color:var(--hd-fg-0);
+}
+.hd-search-item a:hover{
+  border-color:rgba(124,58,237,.35);
+  box-shadow:0 0 0 1px rgba(124,58,237,.12), 0 0 20px rgba(124,58,237,.10);
+}
+.hd-search-summary{margin-top:6px; color:var(--hd-fg-1); font-size:12px}
 `;

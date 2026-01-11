@@ -167,6 +167,10 @@ function validatePluginObject(sourceId: string, plugin: unknown, capabilities: s
     normalized.capabilities = capabilities;
   }
 
+  if (normalized.routes?.pages && typeof normalized.routes.pages !== "function") {
+    throw new Error(`插件 ${normalized.name} routes.pages 必须为函数（source: ${sourceId}）`);
+  }
+
   if (normalized.hooks?.build && typeof normalized.hooks.build !== "function") {
     throw new Error(`插件 ${normalized.name} hooks.build 必须为函数（source: ${sourceId}）`);
   }

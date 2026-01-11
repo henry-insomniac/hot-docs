@@ -8,6 +8,7 @@
   "site": { "title": "Hot Docs", "base": "/" },
   "theme": { "name": "@hot-docs/theme-neon-dark", "tokens": { "accent": "#7c3aed" } },
   "plugins": [
+    { "name": "@hot-docs/plugin-search", "options": { "outFile": "search-index.json" } },
     { "name": "@hot-docs/plugin-sitemap", "options": { "siteUrl": "http://127.0.0.1:4173" } },
     { "name": "@hot-docs/plugin-feed", "options": { "siteUrl": "http://127.0.0.1:4173" } }
   ],

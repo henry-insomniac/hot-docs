@@ -90,6 +90,8 @@
 - [x] 配置契约稳定：`loadConfig` 增加 schema 校验与可读错误信息（含 collections/site/dev/theme/plugins）
 - [x] Docs TOC：生成与渲染（dev/build 行为一致）
 - [x] 文档补齐：新增 v1.0 发布流程（`docs/release-process.md`）与 `CHANGELOG.md` 约定
+- [x] 插件路由阶段：插件可提供虚拟页面（dev/build/preview 行为一致）
+- [x] 示例插件：`@hot-docs/plugin-search`（/search 页面 + build 产物 `search-index.json`）
 
 ## 0. 计划约束与假设
 

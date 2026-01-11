@@ -20,5 +20,6 @@ order: 1
 - [插件系统（v0.4）](./reference/plugins.md)
 - [Markdown 展示示例](./examples/markdown.md)
 - [Blog 列表](/blog/)
+- [站内搜索](/search/)
 
 下一步：打开 `docs/requirements.md` 与 `docs/architecture.md`，按里程碑落地。
