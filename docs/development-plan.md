@@ -84,7 +84,7 @@
 
 ## 执行进度（v1.0：契约稳定与可持续交付）
 
-> 最近更新：2026-01-10
+> 最近更新：2026-01-11
 
 - [x] CI 门禁：GitHub Actions 运行 `pnpm typecheck` / `pnpm test` / `pnpm site:build`
 - [x] 配置契约稳定：`loadConfig` 增加 schema 校验与可读错误信息（含 collections/site/dev/theme/plugins）
@@ -92,6 +92,7 @@
 - [x] 文档补齐：新增 v1.0 发布流程（`docs/release-process.md`）与 `CHANGELOG.md` 约定
 - [x] 插件路由阶段：插件可提供虚拟页面（dev/build/preview 行为一致）
 - [x] 示例插件：`@hot-docs/plugin-search`（/search 页面 + build 产物 `search-index.json`）
+- [x] Blog 列表增强：支持 `summary/cover/coverAlt`（frontmatter）渲染 + 默认主题样式
 
 ## 0. 计划约束与假设
 

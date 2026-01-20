@@ -40,9 +40,13 @@ export type ContentEntry = {
   title: string;
   description?: string;
   summary?: string;
+  cover?: string;
+  coverAlt?: string;
   order?: number;
+  aliases?: string[];
   tags?: string[];
-  category?: string;
+  categories?: string[];
+  category?: string; // legacy: prefer categories
   date?: string;
   updated?: string;
   draft?: boolean;

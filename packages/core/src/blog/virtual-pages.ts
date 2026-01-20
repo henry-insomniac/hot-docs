@@ -1,7 +1,8 @@
 import crypto from "node:crypto";
+import path from "node:path";
 
 import type { ContentEntry, ContentIndex, HotDocsConfig } from "../types.js";
-import { toPageHref, trimTrailingSlash } from "../utils/base.js";
+import { normalizePathname, stripBase, toPageHref, trimTrailingSlash, withBase } from "../utils/base.js";
 import { joinUrlPath } from "../utils/routes.js";
 
 export type BlogVirtualPage = {
@@ -123,19 +124,7 @@ function renderBlogListHtml(
 ): string {
   const tabs = renderBlogTabs(config, blogBase, "blog");
 
-  const items =
-    entries.length === 0
-      ? `<p>暂无文章。</p>`
-      : `<ul>${entries
-          .map((entry) => {
-            const href = toPageHref(config.site.base, entry.routePath);
-            const dateText = formatEntryDate(entry);
-            const draft = entry.draft ? ` <span>（草稿）</span>` : "";
-            const summary = (entry.summary ?? entry.description ?? "").trim();
-            const summaryHtml = summary ? `<p>${escapeHtml(summary)}</p>` : "";
-            return `<li><a href="${href}">${escapeHtml(entry.title)}</a> <small>${escapeHtml(dateText)}${draft}</small>${summaryHtml}</li>`;
-          })
-          .join("")}</ul>`;
+  const items = renderEntryList(config, blogBase, entries);
 
   const pagerHtml = renderPager(config, blogBase, pager.page, pager.totalPages);
 
@@ -189,7 +178,7 @@ function buildTagPages(config: HotDocsConfig, blogBase: string, entries: Content
     const routePath = joinUrlPath(blogBase, `tags/${encodeURIComponent(tag)}`);
     const title = `Tag: ${tag}`;
     const tabs = renderBlogTabs(config, blogBase, "tags");
-    const items = renderEntryList(config, list);
+    const items = renderEntryList(config, blogBase, list);
     const html = `<h1>${escapeHtml(tag)}</h1>${tabs}${items}`;
     const hash = computeHash({ kind: "tag", blogBase, tag, entries: list.map((e) => e.id) });
     pages.push({ routePath, title, html, hash });
@@ -232,7 +221,7 @@ function buildCategoryPages(config: HotDocsConfig, blogBase: string, entries: Co
     const routePath = joinUrlPath(blogBase, `categories/${encodeURIComponent(category)}`);
     const title = `Category: ${category}`;
     const tabs = renderBlogTabs(config, blogBase, "categories");
-    const items = renderEntryList(config, list);
+    const items = renderEntryList(config, blogBase, list);
     const html = `<h1>${escapeHtml(category)}</h1>${tabs}${items}`;
     const hash = computeHash({ kind: "category", blogBase, category, entries: list.map((e) => e.id) });
     pages.push({ routePath, title, html, hash });
@@ -251,7 +240,7 @@ function buildArchivePage(config: HotDocsConfig, blogBase: string, entries: Cont
     groups.length === 0
       ? `<p>暂无归档。</p>`
       : groups
-          .map((g) => `<h2>${escapeHtml(g.key)}</h2>${renderEntryList(config, g.entries)}`)
+          .map((g) => `<h2>${escapeHtml(g.key)}</h2>${renderEntryList(config, blogBase, g.entries)}`)
           .join("");
 
   const html = `<h1>Archive</h1>${tabs}${body}`;
@@ -279,18 +268,89 @@ function renderBlogTabs(config: HotDocsConfig, blogBase: string, active: "blog" 
   );
 }
 
-function renderEntryList(config: HotDocsConfig, entries: ContentEntry[]): string {
+function renderEntryList(config: HotDocsConfig, blogBase: string, entries: ContentEntry[]): string {
   if (entries.length === 0) return `<p>暂无文章。</p>`;
-  return `<ul>${entries
-    .map((entry) => {
-      const href = toPageHref(config.site.base, entry.routePath);
-      const dateText = formatEntryDate(entry);
-      const draft = entry.draft ? ` <span>（草稿）</span>` : "";
-      const summary = (entry.summary ?? entry.description ?? "").trim();
-      const summaryHtml = summary ? `<p>${escapeHtml(summary)}</p>` : "";
-      return `<li><a href="${href}">${escapeHtml(entry.title)}</a> <small>${escapeHtml(dateText)}${draft}</small>${summaryHtml}</li>`;
-    })
-    .join("")}</ul>`;
+  return `<ul class="hd-blog-list">${entries.map((entry) => renderEntryListItem(config, blogBase, entry)).join("")}</ul>`;
+}
+
+function renderEntryListItem(config: HotDocsConfig, blogBase: string, entry: ContentEntry): string {
+  const href = toPageHref(config.site.base, entry.routePath);
+  const dateText = formatEntryDate(entry);
+  const draft = entry.draft ? ` <span class="hd-blog-draft">（草稿）</span>` : "";
+  const summary = (entry.summary ?? entry.description ?? "").trim();
+  const summaryHtml = summary ? `<div class="hd-blog-summary">${escapeHtml(summary)}</div>` : "";
+
+  const coverSrc = resolveCoverSrc(config, blogBase, entry);
+  const coverAlt = (entry.coverAlt ?? entry.title ?? "").trim();
+  const coverHtml = coverSrc
+    ? `<a class="hd-blog-cover" href="${href}"><img src="${escapeHtml(coverSrc)}" alt="${escapeHtml(coverAlt)}" loading="lazy" /></a>`
+    : "";
+
+  return (
+    `<li class="hd-blog-item">` +
+    `${coverHtml}` +
+    `<div class="hd-blog-meta">` +
+    `<a class="hd-blog-title" href="${href}">${escapeHtml(entry.title)}</a>` +
+    `<div class="hd-blog-sub"><small>${escapeHtml(dateText)}${draft}</small></div>` +
+    `${summaryHtml}` +
+    `</div>` +
+    `</li>`
+  );
+}
+
+function resolveCoverSrc(config: HotDocsConfig, blogBase: string, entry: ContentEntry): string | undefined {
+  const raw = typeof entry.cover === "string" ? entry.cover.trim() : "";
+  if (!raw) return undefined;
+  const unsafe = /^javascript:/i.test(raw) || /^vbscript:/i.test(raw);
+  if (unsafe) return undefined;
+  if (hasScheme(raw) || raw.startsWith("//")) return raw;
+
+  const { pathname, query, hash } = splitUrl(raw);
+  if (pathname.startsWith("/")) {
+    const rebased = rebaseAbsolutePath(config.site.base, pathname);
+    return rebased ? `${rebased}${query}${hash}` : undefined;
+  }
+
+  const entryDir = path.posix.dirname(entry.relativePath);
+  const joined = path.posix.normalize(path.posix.join(entryDir === "." ? "" : entryDir, pathname));
+  if (joined === ".." || joined.startsWith("../")) return undefined;
+
+  const assetRoutePath = joinUrlPath(blogBase, joined);
+  return `${withBase(config.site.base, assetRoutePath)}${query}${hash}`;
+}
+
+function splitUrl(url: string): { pathname: string; query: string; hash: string } {
+  let rest = url;
+  let hash = "";
+  let query = "";
+
+  const hashIndex = rest.indexOf("#");
+  if (hashIndex >= 0) {
+    hash = rest.slice(hashIndex);
+    rest = rest.slice(0, hashIndex);
+  }
+
+  const queryIndex = rest.indexOf("?");
+  if (queryIndex >= 0) {
+    query = rest.slice(queryIndex);
+    rest = rest.slice(0, queryIndex);
+  }
+
+  return { pathname: rest, query, hash };
+}
+
+function hasScheme(url: string): boolean {
+  return /^[a-zA-Z][a-zA-Z0-9+.-]*:/.test(url);
+}
+
+function rebaseAbsolutePath(siteBase: string, absolutePath: string): string | undefined {
+  const abs = normalizePathname(absolutePath);
+  const withoutBase = stripBase(siteBase, abs);
+
+  // 如果用户已经手动写了带 base 的绝对路径（例如 /docs/...），则保持不变
+  if (siteBase !== "/" && withoutBase !== abs) return abs;
+
+  return withBase(siteBase, abs);
 }
 
 function collectTagMap(entries: ContentEntry[]): Map<string, ContentEntry[]> {
@@ -311,11 +371,14 @@ function collectTagMap(entries: ContentEntry[]): Map<string, ContentEntry[]> {
 function collectCategoryMap(entries: ContentEntry[]): Map<string, ContentEntry[]> {
   const map = new Map<string, ContentEntry[]>();
   for (const entry of entries) {
-    const c = typeof entry.category === "string" ? entry.category.trim() : "";
-    if (!c) continue;
-    const list = map.get(c) ?? [];
-    list.push(entry);
-    map.set(c, list);
+    const categories = entry.categories?.length ? entry.categories : entry.category ? [entry.category] : [];
+    for (const category of categories) {
+      const c = typeof category === "string" ? category.trim() : "";
+      if (!c) continue;
+      const list = map.get(c) ?? [];
+      list.push(entry);
+      map.set(c, list);
+    }
   }
   for (const list of map.values()) list.sort((a, b) => getEntryTime(b) - getEntryTime(a));
   return map;
@@ -347,4 +410,3 @@ function computeHash(value: unknown): string {
   const json = JSON.stringify(value);
   return crypto.createHash("sha1").update(json).digest("hex").slice(0, 12);
 }
-

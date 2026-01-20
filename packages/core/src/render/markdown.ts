@@ -45,7 +45,18 @@ export async function renderMarkdownToPage(markdown: string, options: RenderMark
 
   processor.use(rehypeStringify);
 
-  const file = await processor.process(content);
+  const vfile: any = {
+    value: content,
+    path: options.filePath,
+    data: {
+      hotDocs: {
+        config: options.config,
+        entry: options.entry,
+        filePath: options.filePath
+      }
+    }
+  };
+  const file = await processor.process(vfile);
 
   const toc = (file.data.hotDocsToc ?? []) as TocItem[];
 
