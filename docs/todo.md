@@ -40,7 +40,7 @@
 - [x] 列表页分页
 - [x] tag/category/archive 路由生成
 - [ ] 文章 slug 策略可配置（扁平 vs 日期分层）
-- [ ] 文章摘要与封面图（frontmatter）渲染与样式
+- [x] 文章摘要与封面图（frontmatter）渲染与样式
 
 ## M5：开源工程化
 - [x] LICENSE（MIT/Apache-2.0 二选一）

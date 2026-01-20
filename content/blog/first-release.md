@@ -3,6 +3,8 @@ title: v0.4 插件系统（最小可用）上线
 date: 2026-01-10
 tags: [release, plugins]
 summary: 增加插件配置与 loader，支持 build hooks 生成 sitemap/feed，并支持在 Markdown 渲染阶段注入扩展。
+cover: ./assets/cover.svg
+coverAlt: v0.4 插件系统封面
 ---
 
 # v0.4 插件系统（最小可用）上线

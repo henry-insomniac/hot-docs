@@ -1,0 +1,24 @@
+ARG NODE_IMAGE=node:22-bookworm-slim
+ARG NGINX_IMAGE=nginx:1.25-alpine
+
+FROM ${NODE_IMAGE} AS builder
+
+WORKDIR /app
+
+RUN corepack enable && corepack prepare pnpm@9.0.0 --activate
+
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml tsconfig.base.json tsconfig.json hot-docs.config.json ./
+COPY packages ./packages
+COPY scripts ./scripts
+COPY content ./content
+
+RUN pnpm install --frozen-lockfile
+RUN pnpm -s site:build
+
+FROM ${NGINX_IMAGE} AS runtime
+
+COPY nginx/hot-docs.conf /etc/nginx/conf.d/default.conf
+COPY --from=builder /app/dist /usr/share/nginx/html
+
+EXPOSE 80
+

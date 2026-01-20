@@ -99,23 +99,60 @@ export async function readContentEntry(args: ReadContentEntryArgs): Promise<Cont
 
   const hash = crypto.createHash("sha1").update(raw).digest("hex").slice(0, 12);
 
+  const tags = normalizeStringArray(front.tags);
+  const categories = normalizeStringArray(front.categories, front.category);
+  const aliases = normalizeStringArray(front.aliases);
+
   return {
     id,
     collection: args.collectionId,
     relativePath: posixPath(args.relativePath),
     routePath,
     title,
-    description: typeof front.description === "string" ? front.description : undefined,
-    summary: typeof front.summary === "string" ? front.summary : undefined,
+    description: normalizeOptionalString(front.description),
+    summary: normalizeOptionalString(front.summary),
+    cover: typeof front.cover === "string" ? front.cover : undefined,
+    coverAlt: typeof front.coverAlt === "string" ? front.coverAlt : undefined,
     order: typeof front.order === "number" ? front.order : undefined,
-    tags: Array.isArray(front.tags) ? front.tags.filter((t) => typeof t === "string") : undefined,
-    category: typeof front.category === "string" ? front.category : undefined,
+    aliases,
+    tags,
+    categories,
+    category: normalizeOptionalString(front.category) ?? categories?.[0],
     date: typeof front.date === "string" ? front.date : undefined,
     updated: typeof front.updated === "string" ? front.updated : undefined,
     draft: typeof front.draft === "boolean" ? front.draft : undefined,
     mtimeMs: stat.mtimeMs,
     hash
   };
+}
+
+function normalizeOptionalString(value: unknown): string | undefined {
+  if (typeof value !== "string") return undefined;
+  const s = value.trim();
+  return s ? s : undefined;
+}
+
+function normalizeStringArray(...values: unknown[]): string[] | undefined {
+  const out: string[] = [];
+
+  for (const value of values) {
+    if (typeof value === "string") {
+      const s = value.trim();
+      if (s) out.push(s);
+      continue;
+    }
+
+    if (Array.isArray(value)) {
+      for (const item of value) {
+        if (typeof item !== "string") continue;
+        const s = item.trim();
+        if (s) out.push(s);
+      }
+    }
+  }
+
+  if (out.length === 0) return undefined;
+  return [...new Set(out)];
 }
 
 function findFirstHeading(markdown: string): string | undefined {
