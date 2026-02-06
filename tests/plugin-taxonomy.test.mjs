@@ -53,6 +53,10 @@ test("plugin-taxonomy: 生成分类索引页与分类详情页", async () => {
     assert.ok(indexHtml.includes("API"));
     assert.ok(indexHtml.includes("(2)"));
 
+    const homeHtml = await fs.readFile(path.join(outDir, "index.html"), "utf8");
+    assert.ok(homeHtml.includes('href="/categories/"'));
+    assert.ok(!homeHtml.includes('href="/search/"'));
+
     const guideHtml = await fs.readFile(path.join(outDir, "categories", "guide", "index.html"), "utf8");
     assert.ok(guideHtml.includes('href="/blog/post/"'));
     assert.ok(guideHtml.includes('href="/"'));

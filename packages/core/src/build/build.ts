@@ -20,6 +20,11 @@ export type BuildStaticSiteOptions = {
   clean?: boolean;
 };
 
+type HeaderQuickLink = {
+  routePath: string;
+  label: string;
+};
+
 export async function buildStaticSite(config: HotDocsConfig, options: BuildStaticSiteOptions = {}): Promise<{
   outDir: string;
   pages: number;
@@ -39,12 +44,17 @@ export async function buildStaticSite(config: HotDocsConfig, options: BuildStati
   const plugins = await loadPlugins(config, { cwd });
   const markdownExtensions = collectMarkdownExtensions(plugins);
   const index = await scanContent(config, { includeDrafts });
+  const blogVirtualPages = listBlogVirtualPages(config, index);
+  const blogReserved = new Set(blogVirtualPages.map((p) => trimTrailingSlash(p.routePath)));
+  const pluginVirtualPages = await collectPluginPages(plugins, { cwd, config, index, blogReserved });
+  const availableRoutes = collectAvailableRoutes(index, blogVirtualPages, pluginVirtualPages);
+  const headerQuickLinks = resolveHeaderQuickLinks(availableRoutes);
 
   const assets = await copyContentAssets(outDir, config);
   await writeThemeAssets(outDir, config, { cwd });
-  const contentPages = await emitPages(outDir, config, index, markdownExtensions);
-  const pluginPages = await emitPluginVirtualPages(outDir, config, index, plugins, { cwd });
-  const blogPages = await emitBlogVirtualPages(outDir, config, index);
+  const contentPages = await emitPages(outDir, config, index, markdownExtensions, { headerQuickLinks });
+  const pluginPages = await emitPluginVirtualPages(outDir, config, index, pluginVirtualPages, { headerQuickLinks });
+  const blogPages = await emitBlogVirtualPages(outDir, config, index, blogVirtualPages, { headerQuickLinks });
   await runBuildHooks(plugins, { cwd, outDir, config, index });
 
   return { outDir, pages: contentPages + pluginPages + blogPages, assets, plugins: plugins.map((p) => p.name) };
@@ -116,7 +126,8 @@ async function emitPages(
   outDir: string,
   config: HotDocsConfig,
   index: ContentIndex,
-  markdown: { remarkPlugins: any[]; rehypePlugins: any[] }
+  markdown: { remarkPlugins: any[]; rehypePlugins: any[] },
+  options: { headerQuickLinks: HeaderQuickLink[] }
 ): Promise<number> {
   const docsNav = getDocsNav(index, config);
   const pageEntries = [...index.entriesByRoute.values()];
@@ -138,7 +149,8 @@ async function emitPages(
       navHtml,
       tocHtml,
       hasToc: !!rendered.toc.length,
-      contentHtml: rendered.html
+      contentHtml: rendered.html,
+      headerQuickLinks: options.headerQuickLinks
     });
 
     const outputFile = routeToOutputFile(outDir, routePath);
@@ -204,7 +216,15 @@ function routeToOutputFile(outDir: string, routePath: string): string {
 
 function renderPageHtml(
   config: HotDocsConfig,
-  page: { routePath: string; title: string; navHtml: string; tocHtml: string; hasToc: boolean; contentHtml: string }
+  page: {
+    routePath: string;
+    title: string;
+    navHtml: string;
+    tocHtml: string;
+    hasToc: boolean;
+    contentHtml: string;
+    headerQuickLinks: HeaderQuickLink[];
+  }
 ): string {
   const siteTitle = escapeHtml(config.site.title);
   const pageTitle = escapeHtml(page.title ? `${page.title} - ${config.site.title}` : config.site.title);
@@ -214,6 +234,7 @@ function renderPageHtml(
   const nav = page.navHtml ? `<aside id="hd-sidebar">${page.navHtml}</aside>` : `<aside id="hd-sidebar"></aside>`;
   const appClass = page.hasToc ? "hd-has-toc" : "";
   const toc = `<aside id="hd-toc">${page.tocHtml ?? ""}</aside>`;
+  const headerQuickLinks = renderHeaderQuickLinks(config, page.routePath, page.headerQuickLinks);
 
   return `<!doctype html>
 <html lang="zh-CN">
@@ -229,6 +250,7 @@ function renderPageHtml(
       <main id="hd-main">
         <div id="hd-header">
           <div id="hd-brand"><a href="${brandHref}">${siteTitle}</a></div>
+          ${headerQuickLinks}
         </div>
         <article id="hd-content">${page.contentHtml}</article>
       </main>
@@ -270,13 +292,33 @@ function renderNavNode(node: NavNode, currentRoutePath: string, config: HotDocsC
   return `<li class="hd-dir">${title}<ul class="hd-list">${children}</ul></li>`;
 }
 
+function renderHeaderQuickLinks(config: HotDocsConfig, currentRoutePath: string, links: HeaderQuickLink[]): string {
+  if (!links.length) return "";
+
+  const current = trimTrailingSlash(currentRoutePath);
+  const body = links
+    .map((link) => {
+      const href = toPageHref(config.site.base, link.routePath);
+      const active = trimTrailingSlash(link.routePath) === current ? " is-active" : "";
+      return `<a class="hd-header-link${active}" href="${href}">${escapeHtml(link.label)}</a>`;
+    })
+    .join("");
+
+  return `<nav class="hd-header-links" aria-label="快捷入口">${body}</nav>`;
+}
+
 function escapeHtml(s: string): string {
   return s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
 }
 
-async function emitBlogVirtualPages(outDir: string, config: HotDocsConfig, index: ContentIndex): Promise<number> {
+async function emitBlogVirtualPages(
+  outDir: string,
+  config: HotDocsConfig,
+  index: ContentIndex,
+  virtualPages: Array<{ routePath: string; title: string; html: string; hash: string }>,
+  options: { headerQuickLinks: HeaderQuickLink[] }
+): Promise<number> {
   const docsNav = getDocsNav(index, config);
-  const virtualPages = listBlogVirtualPages(config, index);
   let count = 0;
 
   for (const page of virtualPages) {
@@ -284,7 +326,15 @@ async function emitBlogVirtualPages(outDir: string, config: HotDocsConfig, index
 
     const routePath = trimTrailingSlash(page.routePath);
     const navHtml = docsNav ? renderNavHtml(docsNav, routePath, config) : "";
-    const pageHtml = renderPageHtml(config, { routePath, title: page.title, navHtml, tocHtml: "", hasToc: false, contentHtml: page.html });
+    const pageHtml = renderPageHtml(config, {
+      routePath,
+      title: page.title,
+      navHtml,
+      tocHtml: "",
+      hasToc: false,
+      contentHtml: page.html,
+      headerQuickLinks: options.headerQuickLinks
+    });
 
     const outputFile = routeToOutputFile(outDir, routePath);
     await fs.mkdir(path.dirname(outputFile), { recursive: true });
@@ -299,11 +349,10 @@ async function emitPluginVirtualPages(
   outDir: string,
   config: HotDocsConfig,
   index: ContentIndex,
-  plugins: HotDocsPlugin[],
-  options: { cwd: string }
+  pages: Array<{ routePath: string; title: string; html: string; hash: string }>,
+  options: { headerQuickLinks: HeaderQuickLink[] }
 ): Promise<number> {
   const docsNav = getDocsNav(index, config);
-  const pages = await collectPluginPages(plugins, { cwd: options.cwd, config, index });
   let count = 0;
 
   for (const page of pages) {
@@ -311,7 +360,15 @@ async function emitPluginVirtualPages(
     if (index.entriesByRoute.has(routePath)) continue; // allow user override with real markdown
 
     const navHtml = docsNav ? renderNavHtml(docsNav, routePath, config) : "";
-    const pageHtml = renderPageHtml(config, { routePath, title: page.title, navHtml, tocHtml: "", hasToc: false, contentHtml: page.html });
+    const pageHtml = renderPageHtml(config, {
+      routePath,
+      title: page.title,
+      navHtml,
+      tocHtml: "",
+      hasToc: false,
+      contentHtml: page.html,
+      headerQuickLinks: options.headerQuickLinks
+    });
 
     const outputFile = routeToOutputFile(outDir, routePath);
     await fs.mkdir(path.dirname(outputFile), { recursive: true });
@@ -324,14 +381,9 @@ async function emitPluginVirtualPages(
 
 async function collectPluginPages(
   plugins: HotDocsPlugin[],
-  ctx: { cwd: string; config: HotDocsConfig; index: ContentIndex }
+  ctx: { cwd: string; config: HotDocsConfig; index: ContentIndex; blogReserved: Set<string> }
 ): Promise<Array<{ routePath: string; title: string; html: string; hash: string }>> {
   const out: Array<{ routePath: string; title: string; html: string; hash: string }> = [];
-  const blogReserved = new Set(
-    listBlogVirtualPages(ctx.config, ctx.index)
-      .filter((p) => !ctx.index.entriesByRoute.has(p.routePath))
-      .map((p) => trimTrailingSlash(p.routePath))
-  );
   const seen = new Map<string, string>();
 
   for (const plugin of plugins) {
@@ -354,7 +406,7 @@ async function collectPluginPages(
       if (typeof p.html !== "string") continue;
 
       const routePath = trimTrailingSlash(p.routePath.trim().startsWith("/") ? p.routePath.trim() : `/${p.routePath.trim()}`);
-      if (blogReserved.has(routePath)) {
+      if (ctx.blogReserved.has(routePath)) {
         throw new Error(`插件虚拟页面路由被 core 占用：${routePath}（plugin: ${plugin.name}）`);
       }
       const prev = seen.get(routePath);
@@ -369,6 +421,35 @@ async function collectPluginPages(
   }
 
   return out;
+}
+
+function collectAvailableRoutes(
+  index: ContentIndex,
+  blogVirtualPages: Array<{ routePath: string }>,
+  pluginVirtualPages: Array<{ routePath: string }>
+): Set<string> {
+  const routes = new Set<string>();
+
+  for (const routePath of index.entriesByRoute.keys()) {
+    routes.add(trimTrailingSlash(routePath));
+  }
+  for (const page of blogVirtualPages) {
+    routes.add(trimTrailingSlash(page.routePath));
+  }
+  for (const page of pluginVirtualPages) {
+    routes.add(trimTrailingSlash(page.routePath));
+  }
+
+  return routes;
+}
+
+function resolveHeaderQuickLinks(availableRoutes: Set<string>): HeaderQuickLink[] {
+  const candidates: HeaderQuickLink[] = [
+    { routePath: "/search", label: "搜索" },
+    { routePath: "/categories", label: "分类" }
+  ];
+
+  return candidates.filter((item) => availableRoutes.has(trimTrailingSlash(item.routePath)));
 }
 
 function computeHash(obj: unknown): string {

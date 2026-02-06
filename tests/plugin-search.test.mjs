@@ -37,6 +37,10 @@ test("plugin-search: 生成 /search/ 页面与 search-index.json", async () => {
     assert.equal(Array.isArray(json.items), true);
     assert.equal(json.items.some((it) => it.routePath === "/" && it.title === "Home" && it.kind === "doc"), true);
     assert.equal(json.items.some((it) => it.routePath === "/" && it.kind === "section" && it.anchor === "#quick-start"), true);
+
+    const homeHtml = await fs.readFile(path.join(outDir, "index.html"), "utf8");
+    assert.ok(homeHtml.includes('href="/search/"'));
+    assert.ok(!homeHtml.includes('href="/categories/"'));
   } finally {
     await fs.rm(tmp, { recursive: true, force: true });
   }
