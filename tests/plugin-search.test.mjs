@@ -14,7 +14,11 @@ test("plugin-search: 生成 /search/ 页面与 search-index.json", async () => {
 
   try {
     await fs.mkdir(path.join(contentDir, "docs"), { recursive: true });
-    await fs.writeFile(path.join(contentDir, "docs", "index.md"), "---\ntitle: Home\nsummary: hello\n---\n# Home\n", "utf8");
+    await fs.writeFile(
+      path.join(contentDir, "docs", "index.md"),
+      "---\ntitle: Home\nsummary: hello\ncategories: [Guide]\n---\n# Home\n\n## Quick Start\n\nSearch plugin section index.\n",
+      "utf8"
+    );
 
     const config = {
       contentDir,
@@ -29,9 +33,10 @@ test("plugin-search: 生成 /search/ 页面与 search-index.json", async () => {
     await assertFile(path.join(outDir, "search-index.json"));
 
     const json = JSON.parse(await fs.readFile(path.join(outDir, "search-index.json"), "utf8"));
-    assert.equal(json.version, 1);
+    assert.equal(json.version, 2);
     assert.equal(Array.isArray(json.items), true);
-    assert.equal(json.items.some((it) => it.routePath === "/" && it.title === "Home"), true);
+    assert.equal(json.items.some((it) => it.routePath === "/" && it.title === "Home" && it.kind === "doc"), true);
+    assert.equal(json.items.some((it) => it.routePath === "/" && it.kind === "section" && it.anchor === "#quick-start"), true);
   } finally {
     await fs.rm(tmp, { recursive: true, force: true });
   }
@@ -41,4 +46,3 @@ async function assertFile(p) {
   const stat = await fs.stat(p);
   assert.equal(stat.isFile(), true, `missing file: ${p}`);
 }
-

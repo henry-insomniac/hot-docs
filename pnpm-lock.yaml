@@ -17,6 +17,9 @@ importers:
       '@hot-docs/plugin-feed':
         specifier: workspace:*
         version: link:packages/plugin-feed
+      '@hot-docs/plugin-mermaid':
+        specifier: workspace:*
+        version: link:packages/plugin-mermaid
       '@hot-docs/plugin-raw-md':
         specifier: workspace:*
         version: link:packages/plugin-raw-md
@@ -26,6 +29,9 @@ importers:
       '@hot-docs/plugin-sitemap':
         specifier: workspace:*
         version: link:packages/plugin-sitemap
+      '@hot-docs/plugin-taxonomy':
+        specifier: workspace:*
+        version: link:packages/plugin-taxonomy
       '@hot-docs/theme-neon-dark':
         specifier: workspace:*
         version: link:packages/theme-neon-dark
@@ -124,6 +130,12 @@ importers:
         specifier: workspace:*
         version: link:../core
 
+  packages/plugin-mermaid:
+    dependencies:
+      '@hot-docs/core':
+        specifier: workspace:*
+        version: link:../core
+
   packages/plugin-raw-md:
     dependencies:
       '@hot-docs/core':
@@ -140,6 +152,12 @@ importers:
         version: 4.0.3
 
   packages/plugin-sitemap:
+    dependencies:
+      '@hot-docs/core':
+        specifier: workspace:*
+        version: link:../core
+
+  packages/plugin-taxonomy:
     dependencies:
       '@hot-docs/core':
         specifier: workspace:*

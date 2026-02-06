@@ -9,6 +9,8 @@
   "theme": { "name": "@hot-docs/theme-neon-dark", "tokens": { "accent": "#7c3aed" } },
   "plugins": [
     { "name": "@hot-docs/plugin-search", "options": { "outFile": "search-index.json" } },
+    { "name": "@hot-docs/plugin-taxonomy", "options": { "routeBase": "/categories", "includeCollections": ["docs", "blog"] } },
+    { "name": "@hot-docs/plugin-mermaid" },
     { "name": "@hot-docs/plugin-raw-md" },
     { "name": "@hot-docs/plugin-ai-pack", "options": { "outDir": "ai", "rawDir": "__raw__", "includeCollections": ["docs", "blog"] } },
     { "name": "@hot-docs/plugin-ai-ui", "options": { "endpointBase": "/seed", "includeCollections": ["docs", "blog"] } },

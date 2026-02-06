@@ -28,10 +28,10 @@
 
 | 里程碑 | 范围 | 优先级 | 状态 | 进度 | 负责人 | 备注 |
 |---|---|---|---|---:|---|---|
-| M1 搜索增强 | section 索引、排序、facet、锚点跳转 | P0 | todo | 0% | TBD | 对应 C01-C04 |
-| M2 分类导航 | taxonomy 插件、分类聚合页 | P1 | todo | 0% | TBD | 对应 C05-C07 |
-| M3 流程图解析 | mermaid 插件、渲染与回退 | P1 | todo | 0% | TBD | 对应 C08-C10 |
-| M4 收口交付 | 配置接入、文档、回归 | P0 | todo | 0% | TBD | 对应 C11-C12 |
+| M1 搜索增强 | section 索引、排序、facet、锚点跳转 | P0 | done | 100% | Codex | 对应 C01-C04 |
+| M2 分类导航 | taxonomy 插件、分类聚合页 | P1 | done | 100% | Codex | 对应 C05-C07 |
+| M3 流程图解析 | mermaid 插件、渲染与回退 | P1 | done | 100% | Codex | 对应 C08-C10 |
+| M4 收口交付 | 配置接入、文档、回归 | P0 | done | 100% | Codex | 对应 C11-C12 |
 
 ---
 
@@ -40,18 +40,18 @@
 | ID | Commit Message | 优先级 | 状态 | 分支 | PR | 开始时间 | 完成时间 | 风险/备注 |
 |---|---|---|---|---|---|---|---|---|
 | C00 | docs(plan): add commit-level implementation plan and tracker | P0 | done | - | - | 2026-02-06 | 2026-02-06 | 已创建计划与跟踪器 |
-| C01 | feat(search): add section-level index model | P0 | todo |  |  |  |  |  |
-| C02 | feat(search): improve ranking and facet filtering | P0 | todo |  |  |  |  |  |
-| C03 | feat(search): render anchor hits with snippet highlight | P1 | todo |  |  |  |  |  |
-| C04 | test(search): cover section recall and ranking behavior | P0 | todo |  |  |  |  |  |
-| C05 | feat(taxonomy): scaffold plugin package and manifest | P1 | todo |  |  |  |  |  |
-| C06 | feat(taxonomy): generate category virtual pages for docs/blog | P1 | todo |  |  |  |  |  |
-| C07 | test(taxonomy): cover category routes and page output | P1 | todo |  |  |  |  |  |
-| C08 | feat(mermaid): scaffold plugin and transform mermaid code blocks | P1 | todo |  |  |  |  |  |
-| C09 | feat(mermaid): add runtime render script with safe fallback | P1 | todo |  |  |  |  |  |
-| C10 | test(mermaid): cover transform output and fallback behavior | P1 | todo |  |  |  |  |  |
-| C11 | chore(config): wire plugins and update reference docs | P0 | todo |  |  |  |  |  |
-| C12 | chore(release): final regression for search taxonomy mermaid | P0 | todo |  |  |  |  |  |
+| C01 | feat(search): add section-level index model | P0 | done | codex/deploy-20260206 | - | 2026-02-06 | 2026-02-06 | 已输出 version=2，含 section 索引 |
+| C02 | feat(search): improve ranking and facet filtering | P0 | done | codex/deploy-20260206 | - | 2026-02-06 | 2026-02-06 | 已完成字段权重排序与 facet 筛选 |
+| C03 | feat(search): render anchor hits with snippet highlight | P1 | done | codex/deploy-20260206 | - | 2026-02-06 | 2026-02-06 | 已支持锚点跳转与高亮 |
+| C04 | test(search): cover section recall and ranking behavior | P0 | done | codex/deploy-20260206 | - | 2026-02-06 | 2026-02-06 | `tests/plugin-search.test.mjs` 已更新 |
+| C05 | feat(taxonomy): scaffold plugin package and manifest | P1 | done | codex/deploy-20260206 | - | 2026-02-06 | 2026-02-06 | 新增 `@hot-docs/plugin-taxonomy` |
+| C06 | feat(taxonomy): generate category virtual pages for docs/blog | P1 | done | codex/deploy-20260206 | - | 2026-02-06 | 2026-02-06 | 已生成 `/categories/` 及详情页 |
+| C07 | test(taxonomy): cover category routes and page output | P1 | done | codex/deploy-20260206 | - | 2026-02-06 | 2026-02-06 | 新增 `tests/plugin-taxonomy.test.mjs` |
+| C08 | feat(mermaid): scaffold plugin and transform mermaid code blocks | P1 | done | codex/deploy-20260206 | - | 2026-02-06 | 2026-02-06 | 新增 `@hot-docs/plugin-mermaid` |
+| C09 | feat(mermaid): add runtime render script with safe fallback | P1 | done | codex/deploy-20260206 | - | 2026-02-06 | 2026-02-06 | 已注入运行时脚本与 fallback |
+| C10 | test(mermaid): cover transform output and fallback behavior | P1 | done | codex/deploy-20260206 | - | 2026-02-06 | 2026-02-06 | 新增 `tests/plugin-mermaid.test.mjs` |
+| C11 | chore(config): wire plugins and update reference docs | P0 | done | codex/deploy-20260206 | - | 2026-02-06 | 2026-02-06 | 已接入 `hot-docs.config.json` |
+| C12 | chore(release): final regression for search taxonomy mermaid | P0 | done | codex/deploy-20260206 | - | 2026-02-06 | 2026-02-06 | `pnpm test/typecheck/site:build` 全通过 |
 
 ---
 
@@ -59,28 +59,28 @@
 
 ## 4.1 搜索能力
 
-- [ ] 能按小节命中（非仅文档级）
-- [ ] 排序优先级符合预期（标题、标签优先）
-- [ ] 支持 facet 筛选（collection/categories/tags）
-- [ ] 结果支持锚点跳转与高亮片段
+- [x] 能按小节命中（非仅文档级）
+- [x] 排序优先级符合预期（标题、标签优先）
+- [x] 支持 facet 筛选（collection/categories/tags）
+- [x] 结果支持锚点跳转与高亮片段
 
 ## 4.2 分类能力
 
-- [ ] 存在 `/categories/`
-- [ ] 存在 `/categories/<slug>/`
-- [ ] docs + blog 均可参与分类聚合
+- [x] 存在 `/categories/`
+- [x] 存在 `/categories/<slug>/`
+- [x] docs + blog 均可参与分类聚合
 
 ## 4.3 流程图解析
 
-- [ ] Mermaid fenced code block 能渲染
-- [ ] 渲染失败可回退显示代码
-- [ ] dev/build/preview 行为一致
+- [x] Mermaid fenced code block 能渲染
+- [x] 渲染失败可回退显示代码
+- [x] dev/build/preview 行为一致
 
 ## 4.4 工程质量
 
-- [ ] `pnpm typecheck` 通过
-- [ ] `pnpm test` 通过
-- [ ] `pnpm site:build` 通过
+- [x] `pnpm typecheck` 通过
+- [x] `pnpm test` 通过
+- [x] `pnpm site:build` 通过
 
 ---
 
@@ -88,7 +88,7 @@
 
 | 日期 | 模块 | 级别 | 描述 | 影响 | 处理人 | 处理状态 |
 |---|---|---|---|---|---|---|
-|  |  |  |  |  |  |  |
+| 2026-02-06 | 无 | - | 当前无阻塞项 | 无 | Codex | closed |
 
 ---
 
@@ -108,4 +108,3 @@
 - 每完成一个 commit，先更新本跟踪器，再进入下一个 commit。
 - 若 commit 拆分，新增行使用 `C06a/C06b` 命名并在备注写明原因。
 - 任何 `blocked` 状态必须在“风险与阻塞记录”中补充处理动作。
-

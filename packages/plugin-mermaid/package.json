@@ -1,0 +1,26 @@
+{
+  "name": "@hot-docs/plugin-mermaid",
+  "version": "0.0.1",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "default": "./dist/index.js"
+    }
+  },
+  "scripts": {
+    "build": "node ../../scripts/build.mjs plugin-mermaid",
+    "typecheck": "tsc -p tsconfig.json --noEmit"
+  },
+  "dependencies": {
+    "@hot-docs/core": "workspace:*"
+  },
+  "hotDocs": {
+    "type": "plugin",
+    "apiVersion": "1",
+    "entry": "./dist/index.js",
+    "capabilities": ["markdown"]
+  }
+}

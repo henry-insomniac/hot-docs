@@ -22,6 +22,8 @@
     "@types/node": "^22.10.0",
     "@hot-docs/theme-neon-dark": "workspace:*",
     "@hot-docs/plugin-search": "workspace:*",
+    "@hot-docs/plugin-taxonomy": "workspace:*",
+    "@hot-docs/plugin-mermaid": "workspace:*",
     "@hot-docs/plugin-raw-md": "workspace:*",
     "@hot-docs/plugin-ai-pack": "workspace:*",
     "@hot-docs/plugin-ai-ui": "workspace:*",
