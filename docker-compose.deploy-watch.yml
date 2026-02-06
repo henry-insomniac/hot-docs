@@ -1,34 +1,30 @@
 services:
   hot-docs-sync:
-    build:
-      context: .
-      dockerfile: Dockerfile.deploy-watch
-      args:
-        NODE_IMAGE: ${NODE_IMAGE:-node:22-bookworm-slim}
+    image: hot-docs-hot-docs-sync:latest
     container_name: hot-docs-sync
     environment:
-      - TZ=Asia/Shanghai
+      TZ: Asia/Shanghai
+      # 允许本地不手动 export 环境变量也能直接启动 watcher（可按需覆盖）
+      HOT_DOCS_DEPLOY_HOST: ${HOT_DOCS_DEPLOY_HOST:-101.126.85.14}
+      HOT_DOCS_DEPLOY_USER: ${HOT_DOCS_DEPLOY_USER:-root}
+      HOT_DOCS_DEPLOY_PORT: ${HOT_DOCS_DEPLOY_PORT:-22}
+      HOT_DOCS_DEPLOY_DEST: ${HOT_DOCS_DEPLOY_DEST:-/var/www/hot-docs}
+      HOT_DOCS_DEPLOY_IDENTITY: ${HOT_DOCS_DEPLOY_IDENTITY:-/root/.ssh/hot-docs_deploy}
     volumes:
       - ./content:/app/content
       - ./hot-docs.config.json:/app/hot-docs.config.json:ro
+      - ./package.json:/app/package.json:ro
+      - ./pnpm-lock.yaml:/app/pnpm-lock.yaml:ro
+      - ./pnpm-workspace.yaml:/app/pnpm-workspace.yaml:ro
+      - ./tsconfig.base.json:/app/tsconfig.base.json:ro
+      - ./tsconfig.json:/app/tsconfig.json:ro
+      - ./packages:/app/packages:ro
       - ./scripts:/app/scripts:ro
       - ~/.ssh:/root/.ssh:ro
     command:
       [
-        "node",
-        "scripts/deploy-watch.mjs",
-        "--host",
-        "${HOT_DOCS_DEPLOY_HOST}",
-        "--user",
-        "${HOT_DOCS_DEPLOY_USER}",
-        "--dest",
-        "${HOT_DOCS_DEPLOY_DEST}",
-        "--identity",
-        "${HOT_DOCS_DEPLOY_IDENTITY:-/root/.ssh/id_ed25519}",
-        "--debounce",
-        "1500",
-        "--poll",
-        "--poll-interval",
-        "1000"
+        "bash",
+        "-lc",
+        "pnpm install --frozen-lockfile && node scripts/deploy-watch.mjs --debounce 1500 --poll --poll-interval 1000 --scan-interval 2000"
       ]
     restart: unless-stopped

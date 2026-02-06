@@ -37,6 +37,9 @@ order: 20
 - `@hot-docs/plugin-sitemap`：生成 `dist/sitemap.xml`
 - `@hot-docs/plugin-feed`：生成 `dist/feed.xml`（默认仅包含 build 未过滤的 blog 文章）
 - `@hot-docs/plugin-search`：提供 `/search/` 虚拟页面，并生成 `dist/search-index.json`
+- `@hot-docs/plugin-raw-md`：输出 `dist/__raw__/...` 原始 Markdown，并在页面注入“下载 Markdown”链接
+- `@hot-docs/plugin-ai-pack`：输出 `dist/ai/*`（`manifest.json` + `chunks.json`），用于“带引用 AI 问答”的证据数据
+- `@hot-docs/plugin-ai-ui`：在 docs/blog 页面注入 AI 面板（问本文档/总结/生成步骤/翻译选中），并渲染 citations（回跳、复制链接、证据折叠）
 
 ## 虚拟页面（routes.pages）
 

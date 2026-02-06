@@ -10,6 +10,8 @@
   "plugins": [
     { "name": "@hot-docs/plugin-search", "options": { "outFile": "search-index.json" } },
     { "name": "@hot-docs/plugin-raw-md" },
+    { "name": "@hot-docs/plugin-ai-pack", "options": { "outDir": "ai", "rawDir": "__raw__", "includeCollections": ["docs", "blog"] } },
+    { "name": "@hot-docs/plugin-ai-ui", "options": { "endpointBase": "/seed", "includeCollections": ["docs", "blog"] } },
     { "name": "@hot-docs/plugin-sitemap", "options": { "siteUrl": "https://example.com/" } },
     { "name": "@hot-docs/plugin-feed", "options": { "siteUrl": "https://example.com/" } }
   ],

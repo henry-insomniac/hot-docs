@@ -6,12 +6,16 @@ import os from "node:os";
 
 function parseArgs(argv) {
   const envPort = typeof process.env.HOT_DOCS_DEPLOY_PORT === "string" ? Number(process.env.HOT_DOCS_DEPLOY_PORT) : undefined;
+  const identityFromEnv =
+    typeof process.env.HOT_DOCS_DEPLOY_IDENTITY === "string" && process.env.HOT_DOCS_DEPLOY_IDENTITY.trim().length > 0;
   const args = {
     host: process.env.HOT_DOCS_DEPLOY_HOST ?? "",
     user: process.env.HOT_DOCS_DEPLOY_USER ?? "",
     port: Number.isFinite(envPort) && envPort ? envPort : 22,
     dest: process.env.HOT_DOCS_DEPLOY_DEST ?? "",
-    identity: process.env.HOT_DOCS_DEPLOY_IDENTITY ?? "~/.ssh/id_ed25519",
+    identity: process.env.HOT_DOCS_DEPLOY_IDENTITY ?? "~/.ssh/hot-docs_deploy",
+    identityFromEnv,
+    identityExplicit: false,
     debounceMs: 1500,
     poll: false,
     pollIntervalMs: 1000,
@@ -27,7 +31,10 @@ function parseArgs(argv) {
     else if (t === "--user") args.user = String(rest.shift() ?? "");
     else if (t === "--port") args.port = Number(rest.shift() ?? 22);
     else if (t === "--dest") args.dest = String(rest.shift() ?? "");
-    else if (t === "--identity") args.identity = String(rest.shift() ?? "");
+    else if (t === "--identity") {
+      args.identity = String(rest.shift() ?? "");
+      args.identityExplicit = true;
+    }
     else if (t === "--debounce") args.debounceMs = Number(rest.shift() ?? 1500);
     else if (t === "--poll") args.poll = true;
     else if (t === "--poll-interval") args.pollIntervalMs = Number(rest.shift() ?? 1000);
@@ -43,7 +50,7 @@ function parseArgs(argv) {
 function usage() {
   // eslint-disable-next-line no-console
   console.log(`用法:
-  node scripts/deploy-watch.mjs --host <HOST> --user <USER> --dest <DEST> [--port 22] [--identity ~/.ssh/id_ed25519] [--debounce 1500] [--poll] [--poll-interval 1000] [--scan|--no-scan] [--scan-interval 2000]
+  node scripts/deploy-watch.mjs --host <HOST> --user <USER> --dest <DEST> [--port 22] [--identity ~/.ssh/hot-docs_deploy] [--debounce 1500] [--poll] [--poll-interval 1000] [--scan|--no-scan] [--scan-interval 2000]
 
 环境变量（可选，作为默认值）:
   HOT_DOCS_DEPLOY_HOST / HOT_DOCS_DEPLOY_USER / HOT_DOCS_DEPLOY_PORT / HOT_DOCS_DEPLOY_DEST / HOT_DOCS_DEPLOY_IDENTITY
@@ -131,13 +138,19 @@ if (args.scanIntervalMs !== undefined && (!Number.isFinite(args.scanIntervalMs) 
   throw new Error("--scan-interval 必须是 >= 200 的毫秒数");
 }
 
-const identity = expandHome(args.identity);
+let identity = expandHome(args.identity);
+if (!(await exists(identity)) && !args.identityExplicit && !args.identityFromEnv) {
+  const fallback = expandHome("~/.ssh/id_ed25519");
+  if (await exists(fallback)) identity = fallback;
+}
 if (!(await exists(identity))) {
   throw new Error(`SSH identity 不存在：${identity}\n请先执行：ssh-keygen -t ed25519 -f ${identity}`);
 }
 
 // eslint-disable-next-line no-console
 console.log(`[hot-docs] watching content/ -> deploy to ${args.user}@${args.host}:${args.dest} (debounce ${args.debounceMs}ms)`);
+// eslint-disable-next-line no-console
+console.log(`[hot-docs] ssh identity: ${identity}`);
 
 let timer = undefined;
 let running = false;
