@@ -3,7 +3,7 @@ import type { Dirent } from "node:fs";
 import fs from "node:fs/promises";
 import path from "node:path";
 
-import type { ContentIndex, HotDocsConfig, NavNode } from "../types.js";
+import type { ContentEntry, ContentIndex, HotDocsConfig, NavNode } from "../types.js";
 import { renderMarkdownToPage, type TocItem } from "../render/markdown.js";
 import { withBase, toPageHref, trimTrailingSlash } from "../utils/base.js";
 import { joinUrlPath, posixPath } from "../utils/routes.js";
@@ -23,6 +23,16 @@ export type BuildStaticSiteOptions = {
 type HeaderQuickLink = {
   routePath: string;
   label: string;
+};
+
+type SidebarCategoryLink = {
+  name: string;
+  count: number;
+  routePath: string;
+};
+
+type SidebarOptions = {
+  categoryLinks: SidebarCategoryLink[];
 };
 
 export async function buildStaticSite(config: HotDocsConfig, options: BuildStaticSiteOptions = {}): Promise<{
@@ -49,12 +59,15 @@ export async function buildStaticSite(config: HotDocsConfig, options: BuildStati
   const pluginVirtualPages = await collectPluginPages(plugins, { cwd, config, index, blogReserved });
   const availableRoutes = collectAvailableRoutes(index, blogVirtualPages, pluginVirtualPages);
   const headerQuickLinks = resolveHeaderQuickLinks(availableRoutes);
+  const sidebarOptions: SidebarOptions = {
+    categoryLinks: resolveSidebarCategoryLinks(config, index, availableRoutes)
+  };
 
   const assets = await copyContentAssets(outDir, config);
   await writeThemeAssets(outDir, config, { cwd });
-  const contentPages = await emitPages(outDir, config, index, markdownExtensions, { headerQuickLinks });
-  const pluginPages = await emitPluginVirtualPages(outDir, config, index, pluginVirtualPages, { headerQuickLinks });
-  const blogPages = await emitBlogVirtualPages(outDir, config, index, blogVirtualPages, { headerQuickLinks });
+  const contentPages = await emitPages(outDir, config, index, markdownExtensions, { headerQuickLinks, sidebarOptions });
+  const pluginPages = await emitPluginVirtualPages(outDir, config, index, pluginVirtualPages, { headerQuickLinks, sidebarOptions });
+  const blogPages = await emitBlogVirtualPages(outDir, config, index, blogVirtualPages, { headerQuickLinks, sidebarOptions });
   await runBuildHooks(plugins, { cwd, outDir, config, index });
 
   return { outDir, pages: contentPages + pluginPages + blogPages, assets, plugins: plugins.map((p) => p.name) };
@@ -127,7 +140,7 @@ async function emitPages(
   config: HotDocsConfig,
   index: ContentIndex,
   markdown: { remarkPlugins: any[]; rehypePlugins: any[] },
-  options: { headerQuickLinks: HeaderQuickLink[] }
+  options: { headerQuickLinks: HeaderQuickLink[]; sidebarOptions: SidebarOptions }
 ): Promise<number> {
   const docsNav = getDocsNav(index, config);
   const pageEntries = [...index.entriesByRoute.values()];
@@ -141,7 +154,7 @@ async function emitPages(
     const rendered = await renderMarkdownToPage(raw, { config, entry, filePath, ...markdown });
 
     const routePath = trimTrailingSlash(entry.routePath);
-    const navHtml = docsNav ? renderNavHtml(docsNav, routePath, config) : "";
+    const navHtml = docsNav ? renderNavHtml(docsNav, routePath, config, options.sidebarOptions) : "";
     const tocHtml = renderTocHtml(rendered.toc);
     const pageHtml = renderPageHtml(config, {
       routePath,
@@ -235,6 +248,8 @@ function renderPageHtml(
   const appClass = page.hasToc ? "hd-has-toc" : "";
   const toc = `<aside id="hd-toc">${page.tocHtml ?? ""}</aside>`;
   const headerQuickLinks = renderHeaderQuickLinks(config, page.routePath, page.headerQuickLinks);
+  const focusButton = `<button id="hd-focus-toggle" class="hd-focus-toggle" type="button" aria-pressed="false">沉浸阅读</button>`;
+  const layoutScript = renderLayoutEnhanceScript();
 
   return `<!doctype html>
 <html lang="zh-CN">
@@ -250,12 +265,13 @@ function renderPageHtml(
       <main id="hd-main">
         <div id="hd-header">
           <div id="hd-brand"><a href="${brandHref}">${siteTitle}</a></div>
-          ${headerQuickLinks}
+          <div class="hd-header-actions">${headerQuickLinks}${focusButton}</div>
         </div>
         <article id="hd-content">${page.contentHtml}</article>
       </main>
       ${toc}
     </div>
+    ${layoutScript}
   </body>
 </html>`;
 }
@@ -275,9 +291,14 @@ function renderTocHtml(items: TocItem[]): string {
   return `<div class="hd-toc-inner"><div class="hd-toc-title">目录</div><ul class="hd-toc-list">${links}</ul></div>`;
 }
 
-function renderNavHtml(nav: NavNode, currentRoutePath: string, config: HotDocsConfig): string {
+function renderNavHtml(nav: NavNode, currentRoutePath: string, config: HotDocsConfig, sidebarOptions: SidebarOptions): string {
+  const filterHtml =
+    `<div class="hd-nav-tools">` +
+    `<input id="hd-nav-filter" class="hd-nav-filter" type="search" placeholder="筛选目录..." autocomplete="off" />` +
+    `</div>`;
+  const categoryHtml = renderSidebarCategoryLinks(config, currentRoutePath, sidebarOptions.categoryLinks);
   const inner = renderNavNode(nav, currentRoutePath, config);
-  return `<ul class="hd-list hd-root">${inner}</ul>`;
+  return `${filterHtml}${categoryHtml}<ul class="hd-list hd-root">${inner}</ul>`;
 }
 
 function renderNavNode(node: NavNode, currentRoutePath: string, config: HotDocsConfig): string {
@@ -288,8 +309,52 @@ function renderNavNode(node: NavNode, currentRoutePath: string, config: HotDocsC
   }
 
   const children = (node.children ?? []).map((c) => renderNavNode(c, currentRoutePath, config)).join("");
-  const title = node.pathSegment ? `<div class="hd-dir-title">${escapeHtml(node.title)}</div>` : "";
-  return `<li class="hd-dir">${title}<ul class="hd-list">${children}</ul></li>`;
+  if (!node.pathSegment) return `<li class="hd-dir hd-dir-root"><ul class="hd-list">${children}</ul></li>`;
+
+  const isOpen = nodeContainsRoute(node, currentRoutePath);
+  const openAttr = isOpen ? " open" : "";
+  return (
+    `<li class="hd-dir">` +
+    `<details class="hd-dir-details"${openAttr}>` +
+    `<summary class="hd-dir-title">${escapeHtml(node.title)}</summary>` +
+    `<ul class="hd-list">${children}</ul>` +
+    `</details>` +
+    `</li>`
+  );
+}
+
+function nodeContainsRoute(node: NavNode, currentRoutePath: string): boolean {
+  const current = trimTrailingSlash(currentRoutePath);
+  if (node.type === "page" && node.routePath) {
+    return trimTrailingSlash(node.routePath) === current;
+  }
+
+  for (const child of node.children ?? []) {
+    if (nodeContainsRoute(child, currentRoutePath)) return true;
+  }
+  return false;
+}
+
+function renderSidebarCategoryLinks(config: HotDocsConfig, currentRoutePath: string, links: SidebarCategoryLink[]): string {
+  if (!links.length) return "";
+
+  const current = trimTrailingSlash(currentRoutePath);
+  const items = links
+    .map((item) => {
+      const href = toPageHref(config.site.base, item.routePath);
+      const active = current === trimTrailingSlash(item.routePath) ? " is-active" : "";
+      return `<a class="hd-nav-chip${active}" href="${href}">${escapeHtml(item.name)} <small>${item.count}</small></a>`;
+    })
+    .join("");
+  const allHref = toPageHref(config.site.base, "/categories");
+  const allActive = current === "/categories" ? " is-active" : "";
+
+  return (
+    `<section class="hd-nav-cats">` +
+    `<div class="hd-dir-title">分类导航</div>` +
+    `<div class="hd-nav-chips"><a class="hd-nav-chip${allActive}" href="${allHref}">全部分类</a>${items}</div>` +
+    `</section>`
+  );
 }
 
 function renderHeaderQuickLinks(config: HotDocsConfig, currentRoutePath: string, links: HeaderQuickLink[]): string {
@@ -307,6 +372,48 @@ function renderHeaderQuickLinks(config: HotDocsConfig, currentRoutePath: string,
   return `<nav class="hd-header-links" aria-label="快捷入口">${body}</nav>`;
 }
 
+function renderLayoutEnhanceScript(): string {
+  return (
+    `<script>` +
+    `(function(){` +
+    `var body=document.body;` +
+    `if(!body)return;` +
+    `var focusKey="hot-docs-focus-mode";` +
+    `var focusBtn=document.getElementById("hd-focus-toggle");` +
+    `function applyFocus(on){` +
+    `body.classList.toggle("hd-focus-mode",!!on);` +
+    `if(focusBtn){focusBtn.setAttribute("aria-pressed",on?"true":"false");focusBtn.textContent=on?"退出沉浸":"沉浸阅读";}` +
+    `}` +
+    `var saved=null;` +
+    `try{saved=window.localStorage?window.localStorage.getItem(focusKey):null;}catch(e){saved=null;}` +
+    `applyFocus(saved==="1");` +
+    `if(focusBtn){focusBtn.addEventListener("click",function(){` +
+    `var next=!body.classList.contains("hd-focus-mode");` +
+    `applyFocus(next);` +
+    `try{if(window.localStorage)window.localStorage.setItem(focusKey,next?"1":"0");}catch(e){}` +
+    `});}` +
+    `var input=document.getElementById("hd-nav-filter");` +
+    `if(!input)return;` +
+    `var items=Array.prototype.slice.call(document.querySelectorAll("#hd-sidebar li.hd-item"));` +
+    `var groups=Array.prototype.slice.call(document.querySelectorAll("#hd-sidebar details.hd-dir-details"));` +
+    `function applyFilter(){` +
+    `var q=String(input.value||"").trim().toLowerCase();` +
+    `items.forEach(function(li){` +
+    `var text=String(li.textContent||"").toLowerCase();` +
+    `li.style.display=(!q||text.indexOf(q)!==-1)?"":"none";` +
+    `});` +
+    `groups.forEach(function(g){` +
+    `var visible=g.querySelectorAll("li.hd-item:not([style*='display: none'])").length>0;` +
+    `g.parentElement.style.display=(!q||visible)?"":"none";` +
+    `if(q&&visible)g.open=true;` +
+    `});` +
+    `}` +
+    `input.addEventListener("input",applyFilter);` +
+    `})();` +
+    `</script>`
+  );
+}
+
 function escapeHtml(s: string): string {
   return s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
 }
@@ -316,7 +423,7 @@ async function emitBlogVirtualPages(
   config: HotDocsConfig,
   index: ContentIndex,
   virtualPages: Array<{ routePath: string; title: string; html: string; hash: string }>,
-  options: { headerQuickLinks: HeaderQuickLink[] }
+  options: { headerQuickLinks: HeaderQuickLink[]; sidebarOptions: SidebarOptions }
 ): Promise<number> {
   const docsNav = getDocsNav(index, config);
   let count = 0;
@@ -325,7 +432,7 @@ async function emitBlogVirtualPages(
     if (index.entriesByRoute.has(page.routePath)) continue; // allow user override with real markdown
 
     const routePath = trimTrailingSlash(page.routePath);
-    const navHtml = docsNav ? renderNavHtml(docsNav, routePath, config) : "";
+    const navHtml = docsNav ? renderNavHtml(docsNav, routePath, config, options.sidebarOptions) : "";
     const pageHtml = renderPageHtml(config, {
       routePath,
       title: page.title,
@@ -350,7 +457,7 @@ async function emitPluginVirtualPages(
   config: HotDocsConfig,
   index: ContentIndex,
   pages: Array<{ routePath: string; title: string; html: string; hash: string }>,
-  options: { headerQuickLinks: HeaderQuickLink[] }
+  options: { headerQuickLinks: HeaderQuickLink[]; sidebarOptions: SidebarOptions }
 ): Promise<number> {
   const docsNav = getDocsNav(index, config);
   let count = 0;
@@ -359,7 +466,7 @@ async function emitPluginVirtualPages(
     const routePath = trimTrailingSlash(page.routePath);
     if (index.entriesByRoute.has(routePath)) continue; // allow user override with real markdown
 
-    const navHtml = docsNav ? renderNavHtml(docsNav, routePath, config) : "";
+    const navHtml = docsNav ? renderNavHtml(docsNav, routePath, config, options.sidebarOptions) : "";
     const pageHtml = renderPageHtml(config, {
       routePath,
       title: page.title,
@@ -450,6 +557,75 @@ function resolveHeaderQuickLinks(availableRoutes: Set<string>): HeaderQuickLink[
   ];
 
   return candidates.filter((item) => availableRoutes.has(trimTrailingSlash(item.routePath)));
+}
+
+function resolveSidebarCategoryLinks(config: HotDocsConfig, index: ContentIndex, availableRoutes: Set<string>): SidebarCategoryLink[] {
+  if (!availableRoutes.has("/categories")) return [];
+
+  const counts = new Map<string, number>();
+  for (const entry of index.entriesByRoute.values()) {
+    const collection = config.collections[entry.collection];
+    if (!collection || collection.type !== "docs") continue;
+
+    for (const category of collectEntryCategories(entry)) {
+      counts.set(category, (counts.get(category) ?? 0) + 1);
+    }
+  }
+
+  if (!counts.size) return [];
+
+  const names = [...counts.keys()].sort((a, b) => {
+    const diff = (counts.get(b) ?? 0) - (counts.get(a) ?? 0);
+    if (diff !== 0) return diff;
+    return a.localeCompare(b, "zh-Hans-CN");
+  });
+
+  const slugMap = buildUniqueCategorySlugMap(names);
+  const links: SidebarCategoryLink[] = [];
+  for (const name of names) {
+    const slug = slugMap.get(name);
+    if (!slug) continue;
+    const routePath = trimTrailingSlash(`/categories/${slug}`);
+    if (!availableRoutes.has(routePath)) continue;
+    links.push({ name, count: counts.get(name) ?? 0, routePath });
+    if (links.length >= 12) break;
+  }
+
+  return links;
+}
+
+function collectEntryCategories(entry: ContentEntry): string[] {
+  const out: string[] = [];
+  for (const raw of entry.categories ?? []) {
+    const value = String(raw ?? "").trim();
+    if (value) out.push(value);
+  }
+  if (typeof entry.category === "string" && entry.category.trim()) out.push(entry.category.trim());
+  return out.length ? [...new Set(out)] : [];
+}
+
+function buildUniqueCategorySlugMap(names: string[]): Map<string, string> {
+  const out = new Map<string, string>();
+  const used = new Map<string, number>();
+  for (const name of names) {
+    const base = slugifyCategory(name) || "category";
+    const count = used.get(base) ?? 0;
+    used.set(base, count + 1);
+    out.set(name, count === 0 ? base : `${base}-${count + 1}`);
+  }
+  return out;
+}
+
+function slugifyCategory(value: string): string {
+  return String(value ?? "")
+    .normalize("NFKD")
+    .toLowerCase()
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^\w\u4e00-\u9fff -]/g, "")
+    .trim()
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
 }
 
 function computeHash(obj: unknown): string {
