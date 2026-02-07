@@ -2,11 +2,12 @@
   --hd-accent:#ff4d4f;
   --hd-accent-2:#52c41a;
   --hd-glow:rgba(255,77,79,.22);
+  --hd-glow-1:rgba(255,77,79,.10);
+  --hd-glow-2:rgba(82,196,26,.08);
 }
 
 body{
-  background:radial-gradient(1200px 600px at 15% 0%, rgba(255,77,79,.10), transparent 55%),
-             radial-gradient(900px 500px at 100% 30%, rgba(82,196,26,.08), transparent 60%),
+  background:radial-gradient(1200px 600px at 15% 0%, var(--hd-glow-1), transparent 55%),
+             radial-gradient(900px 500px at 100% 30%, var(--hd-glow-2), transparent 60%),
              var(--hd-bg-0);
 }
-
