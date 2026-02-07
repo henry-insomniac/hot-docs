@@ -6,7 +6,7 @@
     "pages": { "dir": "pages", "routeBase": "/", "type": "pages" }
   },
   "site": { "title": "Hot Docs", "base": "/" },
-  "theme": { "name": "@hot-docs/theme-neon-dark", "tokens": { "palettePreset": "graphite-cyan", "accent": "#38bdf8" } },
+  "theme": { "name": "@hot-docs/theme-neon-dark", "tokens": { "palettePreset": "notion-light", "accent": "#2f76ff" } },
   "plugins": [
     { "name": "@hot-docs/plugin-search", "options": { "outFile": "search-index.json" } },
     { "name": "@hot-docs/plugin-taxonomy", "options": { "routeBase": "/categories", "includeCollections": ["docs", "blog"] } },

@@ -63,6 +63,22 @@ const THEME_PRESETS: Record<string, Record<string, string>> = {
     "--hd-glow": "rgba(82,196,26,.24)",
     "--hd-glow-1": "rgba(82,196,26,.12)",
     "--hd-glow-2": "rgba(34,211,238,.10)"
+  },
+  "notion-light": {
+    "--hd-bg-0": "#f7f7f5",
+    "--hd-bg-1": "#ffffff",
+    "--hd-bg-2": "#f3f3ef",
+    "--hd-bg-3": "#ecece6",
+    "--hd-fg-0": "#2f3437",
+    "--hd-fg-1": "#37352f",
+    "--hd-fg-2": "#787774",
+    "--hd-border-0": "rgba(15,23,42,.08)",
+    "--hd-border-1": "rgba(15,23,42,.14)",
+    "--hd-accent": "#2f76ff",
+    "--hd-accent-2": "#0f62fe",
+    "--hd-glow": "rgba(47,118,255,.10)",
+    "--hd-glow-1": "rgba(47,118,255,.06)",
+    "--hd-glow-2": "rgba(120,119,116,.05)"
   }
 };
 
