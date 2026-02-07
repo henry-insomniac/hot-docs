@@ -287,9 +287,31 @@ function renderNavNode(node: NavNode, currentRoutePath: string, config: HotDocsC
     return `<li class="hd-item${active}"><a href="${href}">${escapeHtml(node.title)}</a></li>`;
   }
 
+  if (!node.pathSegment) {
+    return (node.children ?? []).map((c) => renderNavNode(c, currentRoutePath, config)).join("");
+  }
+
+  const active = nodeContainsRoute(node, currentRoutePath);
   const children = (node.children ?? []).map((c) => renderNavNode(c, currentRoutePath, config)).join("");
-  const title = node.pathSegment ? `<div class="hd-dir-title">${escapeHtml(node.title)}</div>` : "";
-  return `<li class="hd-dir">${title}<ul class="hd-list">${children}</ul></li>`;
+  const open = active ? " open" : "";
+  const cls = active ? "hd-dir hd-dir-active" : "hd-dir";
+  return (
+    `<li class="${cls}">` +
+    `<details class="hd-dir-details"${open}>` +
+    `<summary class="hd-dir-title">${escapeHtml(node.title)}</summary>` +
+    `<ul class="hd-list">${children}</ul>` +
+    `</details>` +
+    `</li>`
+  );
+}
+
+function nodeContainsRoute(node: NavNode, currentRoutePath: string): boolean {
+  const current = trimTrailingSlash(currentRoutePath);
+  if (node.type === "page" && node.routePath) return trimTrailingSlash(node.routePath) === current;
+  for (const child of node.children ?? []) {
+    if (nodeContainsRoute(child, currentRoutePath)) return true;
+  }
+  return false;
 }
 
 function renderHeaderQuickLinks(config: HotDocsConfig, currentRoutePath: string, links: HeaderQuickLink[]): string {
