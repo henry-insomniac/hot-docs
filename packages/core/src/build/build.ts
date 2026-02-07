@@ -8,7 +8,7 @@ import { renderMarkdownToPage, type TocItem } from "../render/markdown.js";
 import { withBase, toPageHref, trimTrailingSlash } from "../utils/base.js";
 import { joinUrlPath, posixPath } from "../utils/routes.js";
 import { scanContent } from "../content/scan.js";
-import { loadThemeCss } from "../theme/load-theme.js";
+import { loadThemeCss, THEME_PRESETS } from "../theme/load-theme.js";
 import { loadPlugins } from "../plugins/load-plugins.js";
 import type { HotDocsPlugin, PluginVirtualPage } from "../plugins/types.js";
 import { listBlogVirtualPages } from "../blog/virtual-pages.js";
@@ -23,6 +23,15 @@ export type BuildStaticSiteOptions = {
 type HeaderQuickLink = {
   routePath: string;
   label: string;
+};
+
+const PREFERRED_THEME_ORDER = ["notion-dark", "notion-light", "graphite-cyan", "immersive-blue", "brand-green"];
+const THEME_LABELS: Record<string, string> = {
+  "notion-dark": "Notion Dark",
+  "notion-light": "Notion Light",
+  "graphite-cyan": "Graphite Cyan",
+  "immersive-blue": "Immersive Blue",
+  "brand-green": "Brand Green"
 };
 
 export async function buildStaticSite(config: HotDocsConfig, options: BuildStaticSiteOptions = {}): Promise<{
@@ -235,6 +244,17 @@ function renderPageHtml(
   const appClass = page.hasToc ? "hd-has-toc" : "";
   const toc = `<aside id="hd-toc">${page.tocHtml ?? ""}</aside>`;
   const headerQuickLinks = renderHeaderQuickLinks(config, page.routePath, page.headerQuickLinks);
+  const themePresetIds = resolveThemePresetIds();
+  const currentThemePreset = resolveCurrentThemePreset(config, themePresetIds[0] ?? "notion-dark");
+  const runtimeThemeMap = Object.fromEntries(themePresetIds.map((id) => [id, THEME_PRESETS[id] ?? {}]));
+  const runtimeConfig = {
+    searchHref: resolveSearchHref(config, page.headerQuickLinks),
+    themeOrder: themePresetIds,
+    currentThemePreset,
+    themePresets: runtimeThemeMap
+  };
+  const shortcutsModal = renderShortcutsModal(themePresetIds);
+  const runtimeScript = renderRuntimeScript();
 
   return `<!doctype html>
 <html lang="zh-CN">
@@ -256,6 +276,10 @@ function renderPageHtml(
       </main>
       ${toc}
     </div>
+    ${shortcutsModal}
+    <div id="hd-kbd-toast" class="hd-kbd-toast" hidden></div>
+    <script id="hd-runtime-config" type="application/json">${jsonForScript(runtimeConfig)}</script>
+    <script>${runtimeScript}</script>
   </body>
 </html>`;
 }
@@ -315,8 +339,6 @@ function nodeContainsRoute(node: NavNode, currentRoutePath: string): boolean {
 }
 
 function renderHeaderQuickLinks(config: HotDocsConfig, currentRoutePath: string, links: HeaderQuickLink[]): string {
-  if (!links.length) return "";
-
   const current = trimTrailingSlash(currentRoutePath);
   const body = links
     .map((link) => {
@@ -325,12 +347,409 @@ function renderHeaderQuickLinks(config: HotDocsConfig, currentRoutePath: string,
       return `<a class="hd-header-link${active}" href="${href}">${escapeHtml(link.label)}</a>`;
     })
     .join("");
+  const actions =
+    `<button type="button" class="hd-header-link hd-header-btn" id="hd-theme-toggle" aria-label="切换主题（Shift+T）">主题</button>` +
+    `<button type="button" class="hd-header-link hd-header-btn" id="hd-help-toggle" aria-label="查看快捷键（?）">快捷键</button>`;
 
-  return `<nav class="hd-header-links" aria-label="快捷入口">${body}</nav>`;
+  return `<nav class="hd-header-links" aria-label="快捷入口">${body}${actions}</nav>`;
+}
+
+function resolveThemePresetIds(): string[] {
+  const all = Object.keys(THEME_PRESETS);
+  const first = PREFERRED_THEME_ORDER.filter((id) => all.includes(id));
+  const rest = all.filter((id) => !first.includes(id)).sort((a, b) => a.localeCompare(b));
+  return [...first, ...rest];
+}
+
+function resolveCurrentThemePreset(config: HotDocsConfig, fallback: string): string {
+  const tokens = config.theme?.tokens;
+  if (!tokens) return fallback;
+  for (const key of ["palettePreset", "themePreset", "preset"]) {
+    const value = tokens[key];
+    if (typeof value !== "string") continue;
+    const normalized = value.trim().toLowerCase();
+    if (!normalized) continue;
+    if (THEME_PRESETS[normalized]) return normalized;
+  }
+  return fallback;
+}
+
+function resolveSearchHref(config: HotDocsConfig, links: HeaderQuickLink[]): string | null {
+  const item = links.find((it) => trimTrailingSlash(it.routePath) === "/search");
+  if (!item) return null;
+  return toPageHref(config.site.base, item.routePath);
+}
+
+function renderShortcutsModal(themePresetIds: string[]): string {
+  const themeButtons = themePresetIds
+    .map((id) => {
+      const label = THEME_LABELS[id] ?? id;
+      return `<button type="button" class="hd-theme-preset-btn" data-theme-id="${escapeHtml(id)}">${escapeHtml(label)}</button>`;
+    })
+    .join("");
+
+  return (
+    `<div id="hd-shortcuts-modal" class="hd-kbd-modal" hidden aria-hidden="true">` +
+    `<div class="hd-kbd-panel" role="dialog" aria-modal="true" aria-labelledby="hd-kbd-title">` +
+    `<div class="hd-kbd-head">` +
+    `<h2 id="hd-kbd-title">快捷键与阅读操作</h2>` +
+    `<button type="button" class="hd-kbd-close" id="hd-kbd-close" aria-label="关闭">Esc</button>` +
+    `</div>` +
+    `<p class="hd-kbd-tip">按 <kbd>Shift</kbd> + <kbd>T</kbd> 可快速轮换主题。</p>` +
+    `<div class="hd-kbd-grid">` +
+    `<div class="hd-kbd-group"><h3>导航</h3><ul>` +
+    `<li><kbd>/</kbd><span>聚焦搜索（若无搜索页则不跳转）</span></li>` +
+    `<li><kbd>N</kbd>/<kbd>P</kbd><span>跳到下一个/上一个标题</span></li>` +
+    `<li><kbd>g</kbd><kbd>g</kbd> / <kbd>G</kbd><span>回到顶部/底部</span></li>` +
+    `</ul></div>` +
+    `<div class="hd-kbd-group"><h3>阅读</h3><ul>` +
+    `<li><kbd>j</kbd>/<kbd>k</kbd><span>小步下滚/上滚</span></li>` +
+    `<li><kbd>d</kbd>/<kbd>u</kbd><span>半屏下滚/上滚</span></li>` +
+    `<li><kbd>w</kbd><span>切换正文宽度（窄/默认/宽）</span></li>` +
+    `</ul></div>` +
+    `<div class="hd-kbd-group"><h3>布局</h3><ul>` +
+    `<li><kbd>z</kbd><span>沉浸阅读（隐藏左右栏）</span></li>` +
+    `<li><kbd>c</kbd><span>切换左侧目录</span></li>` +
+    `<li><kbd>t</kbd><span>切换右侧目录</span></li>` +
+    `<li><kbd>Esc</kbd><span>关闭弹窗或退出当前操作</span></li>` +
+    `</ul></div>` +
+    `<div class="hd-kbd-group"><h3>主题</h3><ul>` +
+    `<li><kbd>Shift</kbd> + <kbd>T</kbd><span>轮换主题</span></li>` +
+    `<li><span>点击下面按钮直达主题：</span></li>` +
+    `</ul><div class="hd-theme-preset-list">${themeButtons}</div></div>` +
+    `</div>` +
+    `</div>` +
+    `</div>`
+  );
+}
+
+function renderRuntimeScript(): string {
+  return `
+(() => {
+  const app = document.getElementById("hd-app");
+  const content = document.getElementById("hd-content");
+  const shortcutsModal = document.getElementById("hd-shortcuts-modal");
+  const shortcutsClose = document.getElementById("hd-kbd-close");
+  const shortcutsBtn = document.getElementById("hd-help-toggle");
+  const themeBtn = document.getElementById("hd-theme-toggle");
+  const toast = document.getElementById("hd-kbd-toast");
+  const cfgEl = document.getElementById("hd-runtime-config");
+  const cfg = parseJson(cfgEl && cfgEl.textContent);
+  const STORAGE_UI = "hd.ui.v1";
+  const STORAGE_THEME = "hd.theme.v1";
+  const themeOrder = Array.isArray(cfg.themeOrder) ? cfg.themeOrder : [];
+  const themePresets = cfg.themePresets && typeof cfg.themePresets === "object" ? cfg.themePresets : {};
+  const themeVars = collectThemeVars(themePresets);
+  const root = document.documentElement;
+  const state = loadUiState();
+  let gPending = false;
+  let gTimer = 0;
+
+  applyTheme(resolveInitialTheme());
+  applyUiState();
+  bindEvents();
+  updateThemeButton();
+
+  function parseJson(raw) {
+    if (!raw) return {};
+    try { return JSON.parse(raw); } catch { return {}; }
+  }
+
+  function collectThemeVars(presets) {
+    const keys = new Set();
+    for (const values of Object.values(presets)) {
+      if (!values || typeof values !== "object") continue;
+      for (const key of Object.keys(values)) keys.add(key);
+    }
+    return [...keys];
+  }
+
+  function loadUiState() {
+    const defaults = { immersive: false, hideSidebar: false, hideToc: false, width: "default" };
+    try {
+      const raw = localStorage.getItem(STORAGE_UI);
+      if (!raw) return defaults;
+      const parsed = JSON.parse(raw);
+      if (!parsed || typeof parsed !== "object") return defaults;
+      return {
+        immersive: !!parsed.immersive,
+        hideSidebar: !!parsed.hideSidebar,
+        hideToc: !!parsed.hideToc,
+        width: parsed.width === "narrow" || parsed.width === "wide" ? parsed.width : "default"
+      };
+    } catch {
+      return defaults;
+    }
+  }
+
+  function saveUiState() {
+    try { localStorage.setItem(STORAGE_UI, JSON.stringify(state)); } catch {}
+  }
+
+  function resolveInitialTheme() {
+    const fromStorage = localStorage.getItem(STORAGE_THEME);
+    if (fromStorage && themePresets[fromStorage]) return fromStorage;
+    if (cfg.currentThemePreset && themePresets[cfg.currentThemePreset]) return cfg.currentThemePreset;
+    return themeOrder.find((id) => !!themePresets[id]) || "";
+  }
+
+  function applyTheme(themeId) {
+    if (!themeId || !themePresets[themeId]) return;
+    const values = themePresets[themeId];
+    for (const key of themeVars) {
+      const value = values[key];
+      if (typeof value === "string") root.style.setProperty(key, value);
+      else root.style.removeProperty(key);
+    }
+    root.setAttribute("data-hd-theme", themeId);
+    try { localStorage.setItem(STORAGE_THEME, themeId); } catch {}
+    updateThemeButton();
+  }
+
+  function updateThemeButton() {
+    if (!themeBtn) return;
+    const themeId = root.getAttribute("data-hd-theme") || "";
+    themeBtn.textContent = themeId ? ("主题: " + themeId) : "主题";
+  }
+
+  function cycleTheme() {
+    if (!themeOrder.length) return;
+    const current = root.getAttribute("data-hd-theme");
+    const idx = current ? themeOrder.indexOf(current) : -1;
+    const next = themeOrder[(idx + 1 + themeOrder.length) % themeOrder.length];
+    applyTheme(next);
+    showToast("主题已切换: " + next);
+  }
+
+  function applyUiState() {
+    if (!app) return;
+    app.classList.toggle("hd-immersive", !!state.immersive);
+    app.classList.toggle("hd-hide-sidebar", !state.immersive && !!state.hideSidebar);
+    app.classList.toggle("hd-hide-toc", !state.immersive && !!state.hideToc);
+    document.body.classList.toggle("hd-content-narrow", state.width === "narrow");
+    document.body.classList.toggle("hd-content-wide", state.width === "wide");
+  }
+
+  function toggleImmersive() {
+    state.immersive = !state.immersive;
+    applyUiState();
+    saveUiState();
+    showToast(state.immersive ? "沉浸阅读: 开启" : "沉浸阅读: 关闭");
+  }
+
+  function toggleSidebar() {
+    if (state.immersive) state.immersive = false;
+    state.hideSidebar = !state.hideSidebar;
+    applyUiState();
+    saveUiState();
+    showToast(state.hideSidebar ? "左侧目录: 隐藏" : "左侧目录: 显示");
+  }
+
+  function toggleToc() {
+    if (state.immersive) state.immersive = false;
+    state.hideToc = !state.hideToc;
+    applyUiState();
+    saveUiState();
+    showToast(state.hideToc ? "右侧目录: 隐藏" : "右侧目录: 显示");
+  }
+
+  function cycleWidth() {
+    state.width = state.width === "default" ? "narrow" : state.width === "narrow" ? "wide" : "default";
+    applyUiState();
+    saveUiState();
+    const label = state.width === "default" ? "默认" : state.width === "narrow" ? "窄" : "宽";
+    showToast("正文宽度: " + label);
+  }
+
+  function openShortcuts() {
+    if (!shortcutsModal) return;
+    shortcutsModal.hidden = false;
+    shortcutsModal.setAttribute("aria-hidden", "false");
+    showToast("快捷键说明已打开");
+  }
+
+  function closeShortcuts() {
+    if (!shortcutsModal || shortcutsModal.hidden) return;
+    shortcutsModal.hidden = true;
+    shortcutsModal.setAttribute("aria-hidden", "true");
+  }
+
+  function scrollStep(delta) {
+    window.scrollBy({ top: delta, behavior: "smooth" });
+  }
+
+  function jumpHeading(direction) {
+    const nodes = [...document.querySelectorAll("#hd-content h2[id], #hd-content h3[id], #hd-content h4[id]")];
+    if (!nodes.length) return;
+    const currentY = window.scrollY + 96;
+    if (direction > 0) {
+      const target = nodes.find((el) => el.offsetTop > currentY + 4) || nodes[nodes.length - 1];
+      if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+      return;
+    }
+    const reversed = [...nodes].reverse();
+    const target = reversed.find((el) => el.offsetTop < currentY - 4) || nodes[0];
+    if (target) target.scrollIntoView({ behavior: "smooth", block: "start" });
+  }
+
+  function goSearch() {
+    const input = document.getElementById("hd-search-q");
+    if (input && typeof input.focus === "function") {
+      input.focus();
+      input.select && input.select();
+      return;
+    }
+    if (cfg.searchHref) window.location.href = cfg.searchHref;
+  }
+
+  function isEditableTarget(target) {
+    if (!target || !(target instanceof Element)) return false;
+    if (target.closest("input, textarea, select, [contenteditable='true']")) return true;
+    const active = document.activeElement;
+    return !!(active && active instanceof Element && active.closest("input, textarea, select, [contenteditable='true']"));
+  }
+
+  function showToast(message) {
+    if (!toast) return;
+    toast.textContent = message;
+    toast.hidden = false;
+    clearTimeout(showToast.tid);
+    showToast.tid = setTimeout(() => {
+      toast.hidden = true;
+    }, 1200);
+  }
+  showToast.tid = 0;
+
+  function bindEvents() {
+    document.addEventListener("keydown", onKeydown);
+    shortcutsBtn && shortcutsBtn.addEventListener("click", openShortcuts);
+    shortcutsClose && shortcutsClose.addEventListener("click", closeShortcuts);
+    themeBtn && themeBtn.addEventListener("click", cycleTheme);
+    shortcutsModal && shortcutsModal.addEventListener("click", (e) => {
+      const target = e.target;
+      if (!(target instanceof Element)) return;
+      if (target === shortcutsModal) closeShortcuts();
+      const presetBtn = target.closest("[data-theme-id]");
+      if (presetBtn) {
+        const id = presetBtn.getAttribute("data-theme-id");
+        if (id) {
+          applyTheme(id);
+          showToast("主题已切换: " + id);
+        }
+      }
+    });
+  }
+
+  function onKeydown(e) {
+    if (e.defaultPrevented) return;
+    if (e.metaKey || e.ctrlKey || e.altKey) return;
+    const key = e.key;
+    const lower = key.toLowerCase();
+
+    if (key === "Escape") {
+      closeShortcuts();
+      gPending = false;
+      return;
+    }
+    if (e.shiftKey && lower === "t") {
+      e.preventDefault();
+      cycleTheme();
+      return;
+    }
+    if (key === "?" && !isEditableTarget(e.target)) {
+      e.preventDefault();
+      openShortcuts();
+      return;
+    }
+    if (!shortcutsModal || !shortcutsModal.hidden) {
+      return;
+    }
+    if (isEditableTarget(e.target)) return;
+
+    if (lower === "/") {
+      e.preventDefault();
+      goSearch();
+      return;
+    }
+    if (lower === "j") {
+      e.preventDefault();
+      scrollStep(72);
+      return;
+    }
+    if (lower === "k") {
+      e.preventDefault();
+      scrollStep(-72);
+      return;
+    }
+    if (lower === "d") {
+      e.preventDefault();
+      scrollStep(Math.round(window.innerHeight * 0.5));
+      return;
+    }
+    if (lower === "u") {
+      e.preventDefault();
+      scrollStep(-Math.round(window.innerHeight * 0.5));
+      return;
+    }
+    if (lower === "n") {
+      e.preventDefault();
+      jumpHeading(1);
+      return;
+    }
+    if (lower === "p") {
+      e.preventDefault();
+      jumpHeading(-1);
+      return;
+    }
+    if (lower === "g") {
+      e.preventDefault();
+      if (e.shiftKey || key === "G") {
+        window.scrollTo({ top: document.body.scrollHeight, behavior: "smooth" });
+        return;
+      }
+      if (gPending) {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+        gPending = false;
+        clearTimeout(gTimer);
+      } else {
+        gPending = true;
+        clearTimeout(gTimer);
+        gTimer = setTimeout(() => {
+          gPending = false;
+        }, 420);
+      }
+      return;
+    }
+    if (lower === "z") {
+      e.preventDefault();
+      toggleImmersive();
+      return;
+    }
+    if (lower === "c") {
+      e.preventDefault();
+      toggleSidebar();
+      return;
+    }
+    if (lower === "t") {
+      e.preventDefault();
+      toggleToc();
+      return;
+    }
+    if (lower === "w") {
+      e.preventDefault();
+      cycleWidth();
+    }
+  }
+})();
+`;
 }
 
 function escapeHtml(s: string): string {
   return s.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;");
+}
+
+function jsonForScript(value: unknown): string {
+  return JSON.stringify(value).replaceAll("<", "\\u003c");
 }
 
 async function emitBlogVirtualPages(

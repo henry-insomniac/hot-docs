@@ -45,6 +45,10 @@ test("buildStaticSite: output paths + base", async () => {
 
     const html = await fs.readFile(path.join(cwd, "dist", "index.html"), "utf8");
     assert.ok(html.includes('href="/docs/assets/theme.css"'));
+    assert.ok(html.includes('id="hd-help-toggle"'));
+    assert.ok(html.includes('id="hd-theme-toggle"'));
+    assert.ok(html.includes('id="hd-shortcuts-modal"'));
+    assert.ok(html.includes('id="hd-runtime-config"'));
   } finally {
     await fs.rm(cwd, { recursive: true, force: true });
   }
@@ -54,4 +58,3 @@ async function assertFile(p) {
   const stat = await fs.stat(p);
   assert.equal(stat.isFile(), true, `missing file: ${p}`);
 }
-

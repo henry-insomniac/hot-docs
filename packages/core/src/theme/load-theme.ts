@@ -15,7 +15,7 @@ type ThemeManifest = {
   style: string;
 };
 
-const THEME_PRESETS: Record<string, Record<string, string>> = {
+export const THEME_PRESETS: Record<string, Record<string, string>> = {
   "immersive-blue": {
     "--hd-bg-0": "#0b1118",
     "--hd-bg-1": "#0f1724",
